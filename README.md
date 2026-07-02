@@ -1,6 +1,7 @@
-# SwiftDice  ![Build Status](https://github.com/mrlegowatch/SwiftDice/workflows/Swift/badge.svg)
+# SwiftDice  [![Swift](https://github.com/mrlegowatch/RolePlayingCore/actions/workflows/swift.yml/badge.svg)](https://github.com/mrlegowatch/RolePlayingCore/actions/workflows/swift.yml)
+![Code Coverage](https://codecov.io/gh/mrlegowatch/SwiftDice/branch/development/graph/badge.svg)
 ![Swift Version](https://img.shields.io/badge/Swift-6.0-orange.svg)
-![Platform](https://img.shields.io/badge/platform-iOS%20%7C%20macOS-lightgrey.svg)
+![Platform](https://img.shields.io/badge/platform-iOS%20%7C%20macOS%20%7C%20Linux-lightgrey.svg)
 [![License](https://img.shields.io/github/license/mrlegowatch/SwiftDice)](LICENSE)
 
 A Swift package for representing and rolling dice using standard tabletop RPG notation.
