@@ -156,7 +156,7 @@ func tokenize(_ string: String) throws -> [Token] {
 private struct DiceParserState {
     private(set) var lastNumber: Int?
     private(set) var lastDice: Rollable?
-    private(set) var lastMathOperator: String?
+    private(set) var lastMathOperator: CompoundDice.MathOperator?
     private(set) var isParsingDie = false
 
     // MARK: Parsing Methods
@@ -206,7 +206,7 @@ private struct DiceParserState {
         guard let dice = lastDice as? Dice else {
             throw DiceParseError.missingSimpleDice
         }
-        guard lastMathOperator == "-" else {
+        guard lastMathOperator == .subtract else {
             throw DiceParseError.missingMinus
         }
         guard let diceDrop = DroppingDice.Drop(rawValue: drop) else {
@@ -225,7 +225,11 @@ private struct DiceParserState {
         guard lastMathOperator == nil else {
             throw DiceParseError.consecutiveMathOperators
         }
-        lastMathOperator = math
+        let normalized = math == "*" ? "x" : math
+        guard let op = CompoundDice.MathOperator(rawValue: normalized) else {
+            throw DiceParseError.invalidCharacter(math)
+        }
+        lastMathOperator = op
     }
 
     /// Returns a `Rollable` from either the last number (`DiceModifier`) or `lastDice`,

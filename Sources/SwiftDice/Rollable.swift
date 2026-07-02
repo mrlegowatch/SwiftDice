@@ -13,7 +13,4 @@ public protocol Rollable: CustomStringConvertible, Sendable {
 
     /// Rolls the dice, and returns the result in a DiceRoll.
     func roll() -> DiceRoll
-
-    /// Returns the number of dice sides.
-    var sides: Int { get }
 }
