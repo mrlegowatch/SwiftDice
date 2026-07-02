@@ -55,3 +55,22 @@ public struct Dice: Rollable {
         return "(\(rollsString))"
     }
 }
+
+// MARK: - Arithmetic Operators
+
+/// Returns a `Dice` rolled the specified number of times.
+public func *(lhs: Int, rhs: Dice) -> Dice {
+    Dice(rhs.die, times: lhs)
+}
+
+// These extensions are intended to be used with the `*` operator, above,
+// since that replaces the need to specify the `times` parameter.
+extension Dice {
+    public static let d4   = Dice(.d4)
+    public static let d6   = Dice(.d6)
+    public static let d8   = Dice(.d8)
+    public static let d10  = Dice(.d10)
+    public static let d12  = Dice(.d12)
+    public static let d20  = Dice(.d20)
+    public static let d100 = Dice(.d100)
+}

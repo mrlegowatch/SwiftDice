@@ -1,6 +1,7 @@
-# SwiftDice  ![Build Status](https://github.com/mrlegowatch/SwiftDice/workflows/Swift/badge.svg)
+# SwiftDice  [![Swift](https://github.com/mrlegowatch/RolePlayingCore/actions/workflows/swift.yml/badge.svg)](https://github.com/mrlegowatch/RolePlayingCore/actions/workflows/swift.yml)
+![Code Coverage](https://codecov.io/gh/mrlegowatch/SwiftDice/branch/development/graph/badge.svg)
 ![Swift Version](https://img.shields.io/badge/Swift-6.0-orange.svg)
-![Platform](https://img.shields.io/badge/platform-iOS%20%7C%20macOS-lightgrey.svg)
+![Platform](https://img.shields.io/badge/platform-iOS%20%7C%20macOS%20%7C%20Linux-lightgrey.svg)
 [![License](https://img.shields.io/github/license/mrlegowatch/SwiftDice)](LICENSE)
 
 A Swift package for representing and rolling dice using standard tabletop RPG notation.
@@ -11,17 +12,34 @@ SwiftDice provides a `Rollable` protocol and several concrete types covering the
 
 ## Dice Types
 
-All types conform to `Rollable`, which requires a `roll() -> DiceRoll` method, a `sides` property, and `CustomStringConvertible`. A `DiceRoll` carries both the integer `result` and a human-readable `description` of the roll (e.g. `"(4 + 2 + 6 + 1) - 1"`).
+All types conform to `Rollable`, which requires a `roll() -> DiceRoll` method, a `sides` property, and `CustomStringConvertible`. A `DiceRoll` carries both the integer `result` and a human-readable `description` of the intermediate values (e.g. `"(4 + 2 + 6 + 1) - 1"`).
 
 | Type | Description | Example |
 |---|---|---|
-| `Die` | A single die with a fixed number of sides | `Die.d6.roll()` |
-| `Dice` | One or more of the same die | `Dice(.d8, times: 2)` → `"2d8"` |
+| `Dice` | One or more of the same die | `Dice.d8`, `2 * Dice.d8` |
+| `DroppingDice` | Rolls multiple dice and drops the highest or lowest | `(4 * Dice.d6).dropping(.lowest)` |
+| `CompoundDice` | Combines two `Rollable` values with a math operator | `2 * Dice.d8 + 4`, `2 * Dice.d8 + .d4` |
 | `DiceModifier` | A constant value used as a `Rollable` | `DiceModifier(3)` → `"3"` |
-| `DroppingDice` | Rolls multiple dice and drops the highest or lowest | `DroppingDice(.d6, times: 4, drop: .lowest)` → `"4d6-L"` |
-| `CompoundDice` | Combines two `Rollable` values with a math operator | `CompoundDice(lhs: Dice(.d8), rhs: DiceModifier(2), mathOperator: "+")` → `"d8+2"` |
 
 Supported die sizes: **d4, d6, d8, d10, d12, d20, d100** (also written as `d%`).
+
+## Expressions
+
+`Dice` provides static shorthands for each die size, so die types read naturally without a `Die.` prefix. The `*`, `+`, and `-` operators and `.dropping(_:)` method compose these into larger expressions:
+
+```swift
+Dice.d20                              // d20
+2 * Dice.d8                           // 2d8
+2 * Dice.d8 + 4                       // 2d8+4
+2 * Dice.d8 + .d4                     // 2d8+d4
+(4 * Dice.d6).dropping(.lowest)       // 4d6-L
+```
+
+In a typed context, `.d6`, `.d8`, etc. are available without the `Dice.` prefix:
+
+```swift
+let damage: some Rollable = 2 * .d6 + 3
+```
 
 ## Dice Notation Parser
 
@@ -56,10 +74,15 @@ let hitDice = try container.decode(Rollable.self, forKey: .hitDice)
 import SwiftDice
 
 // Roll ability scores: 4d6, drop lowest
-let abilityRoll = DroppingDice(.d6, times: 4, drop: .lowest)
+let abilityRoll = (4 * Dice.d6).dropping(.lowest)
 let result = abilityRoll.roll()
 print(result.result)       // e.g. 14
 print(result.description)  // e.g. "(3 + 6 + 4 + 5) - 3"
+
+// Weapon damage: 2d8+4
+let damage = 2 * Dice.d8 + 4
+print(damage)              // "2d8+4"
+print(damage.roll().result) // e.g. 13
 
 // Parse from a string
 if let startingGold = "5d4x10".parseDice {

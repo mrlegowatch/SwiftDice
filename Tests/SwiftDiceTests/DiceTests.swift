@@ -209,6 +209,67 @@ struct DiceTests {
         #expect("\(compoundDice.description)" == "2d8+4", "description")
     }
 
+    @Test("Dice static shorthands")
+    func diceStaticShorthands() {
+        #expect(Dice.d4.sides == 4)
+        #expect(Dice.d6.sides == 6)
+        #expect(Dice.d8.sides == 8)
+        #expect(Dice.d10.sides == 10)
+        #expect(Dice.d12.sides == 12)
+        #expect(Dice.d20.sides == 20)
+        #expect(Dice.d100.sides == 100)
+        #expect(Dice.d4.description == "d4")
+        #expect(Dice.d100.description == "d%")
+    }
+
+    @Test("Multiplication operator")
+    func multiplicationOperator() {
+        let dice = 2 * Dice.d8
+        #expect(dice.sides == 8)
+        #expect(dice.description == "2d8")
+    }
+
+    @Test("Addition operator with modifier")
+    func additionOperatorWithModifier() {
+        let dice = 2 * Dice.d8 + 4
+        #expect(dice.sides == 8)
+        #expect(dice.description == "2d8+4")
+        let roll = dice.roll()
+        #expect((6...20).contains(roll.result))
+    }
+
+    @Test("Subtraction operator with modifier")
+    func subtractionOperatorWithModifier() {
+        let dice = Dice.d12 - 2
+        #expect(dice.sides == 12)
+        #expect(dice.description == "d12-2")
+        let roll = dice.roll()
+        #expect((-1...10).contains(roll.result))
+    }
+
+    @Test("Addition operator with dice")
+    func additionOperatorWithDice() {
+        let dice = 2 * Dice.d8 + Dice.d4
+        #expect(dice.sides == 8)
+        #expect(dice.description == "2d8+d4")
+    }
+
+    @Test("Dropping method lowest")
+    func droppingMethodLowest() {
+        let dice = (4 * Dice.d6).dropping(.lowest)
+        #expect(dice.sides == 6)
+        #expect(dice.description == "4d6-L")
+        let roll = dice.roll()
+        #expect((3...18).contains(roll.result))
+    }
+
+    @Test("Dropping method highest")
+    func droppingMethodHighest() {
+        let dice = (3 * Dice.d4).dropping(.highest)
+        #expect(dice.sides == 4)
+        #expect(dice.description == "3d4-H")
+    }
+
     @Test("Compound dice with dice")
     func compoundDiceWithDice() {
         let compoundDice = CompoundDice(lhs: Dice(.d8, times: 2), rhs: Dice(.d4), mathOperator: "+")
