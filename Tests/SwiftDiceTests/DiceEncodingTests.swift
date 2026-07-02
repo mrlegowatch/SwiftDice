@@ -28,7 +28,7 @@ struct DiceEncodingTests {
             }
         }
 
-        let diceContainer = DiceContainer(dice: CompoundDice(.d8, times: 3, modifier: 3, mathOperator: "-"))
+        let diceContainer = DiceContainer(dice: CompoundDice(.d8, times: 3, modifier: 3, mathOperator: .subtract))
         let encoder = JSONEncoder()
         let encoded = try encoder.encode(diceContainer)
         let deserialized = try JSONSerialization.jsonObject(with: encoded, options: []) as? [String: String]
@@ -58,7 +58,6 @@ struct DiceEncodingTests {
         let decoder = JSONDecoder()
         let decoded = try decoder.decode(DiceContainer.self, from: traits)
         #expect(decoded.dice is CompoundDice, "decode as compound dice")
-        #expect(decoded.dice.sides == 6, "decode dice sides")
     }
 
     @Test("Decoding dice - dice modifier")
@@ -84,7 +83,6 @@ struct DiceEncodingTests {
         let decoder = JSONDecoder()
         let decoded = try decoder.decode(DiceContainer.self, from: traits)
         #expect(decoded.dice is DiceModifier, "decode as dice modifier")
-        #expect(decoded.dice.sides == 5, "decode dice sides")
     }
 
     @Test("Decoding dice - invalid dice string")
@@ -136,7 +134,6 @@ struct DiceEncodingTests {
         let decoder = JSONDecoder()
         let decoded = try decoder.decode(DiceContainer.self, from: traits)
         #expect(decoded.dice is CompoundDice, "decode as compound dice")
-        #expect(decoded.dice?.sides == 6, "decode dice sides")
     }
 
     @Test("Decoding dice if present - dice modifier")
@@ -162,7 +159,6 @@ struct DiceEncodingTests {
         let decoder = JSONDecoder()
         let decoded = try decoder.decode(DiceContainer.self, from: traits)
         #expect(decoded.dice is DiceModifier, "decode as dice modifier")
-        #expect(decoded.dice?.sides == 5, "decode dice sides")
     }
 
     @Test("Decoding dice if present - invalid dice string")

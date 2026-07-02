@@ -7,22 +7,18 @@
 //
 
 
-/// A dice modifier is a constant value that can take the place of a Rollable instance.
+/// A constant value that participates as a `Rollable`, used as a modifier in compound expressions.
+/// Construct via the `+` or `-` operators on `Rollable` rather than directly.
 public struct DiceModifier: Rollable {
     public let modifier: Int
 
-    public init(_ modifier: Int) {
+    init(_ modifier: Int) {
         self.modifier = modifier
     }
 
     public func roll() -> DiceRoll {
         return DiceRoll(modifier, "\(modifier)")
     }
-
-    /// Returns the modifier value to conform to the Rollable protocol.
-    /// Note: A modifier doesn't have "sides" in the traditional sense,
-    /// but this property is required by the protocol.
-    public var sides: Int { modifier }
 
     public var description: String { "\(modifier)" }
 }

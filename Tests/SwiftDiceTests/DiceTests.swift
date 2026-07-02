@@ -71,17 +71,6 @@ struct DiceTests {
         #expect(Die.d4.description == "d4", "d4 description")
     }
 
-    @Test("Dice modifier")
-    func diceModifier() {
-        let diceModifier = DiceModifier(7)
-        let diceRoll = diceModifier.roll()
-        #expect(diceModifier.modifier == 7, "dice modifier value")
-        #expect(diceRoll.result == 7, "dice modifier roll")
-        #expect(diceModifier.sides == 7, "dice modifier sides")
-        #expect(diceModifier.description == "7", "dice modifier description")
-        #expect(diceRoll.description == "7", "dice modifier lastRollDescription")
-    }
-
     @Test("Dice d12")
     func diceD12() {
         let dice = Dice(.d12)
@@ -205,7 +194,6 @@ struct DiceTests {
         #expect(minValue == 6, "min value")
         #expect(maxValue == 20, "max value")
 
-        #expect(compoundDice.sides == 8, "sides")
         #expect("\(compoundDice.description)" == "2d8+4", "description")
     }
 
@@ -232,7 +220,6 @@ struct DiceTests {
     @Test("Addition operator with modifier")
     func additionOperatorWithModifier() {
         let dice = 2 * Dice.d8 + 4
-        #expect(dice.sides == 8)
         #expect(dice.description == "2d8+4")
         let roll = dice.roll()
         #expect((6...20).contains(roll.result))
@@ -241,7 +228,6 @@ struct DiceTests {
     @Test("Subtraction operator with modifier")
     func subtractionOperatorWithModifier() {
         let dice = Dice.d12 - 2
-        #expect(dice.sides == 12)
         #expect(dice.description == "d12-2")
         let roll = dice.roll()
         #expect((-1...10).contains(roll.result))
@@ -250,7 +236,6 @@ struct DiceTests {
     @Test("Addition operator with dice")
     func additionOperatorWithDice() {
         let dice = 2 * Dice.d8 + Dice.d4
-        #expect(dice.sides == 8)
         #expect(dice.description == "2d8+d4")
     }
 
@@ -272,7 +257,7 @@ struct DiceTests {
 
     @Test("Compound dice with dice")
     func compoundDiceWithDice() {
-        let compoundDice = CompoundDice(lhs: Dice(.d8, times: 2), rhs: Dice(.d4), mathOperator: "+")
+        let compoundDice = CompoundDice(lhs: Dice(.d8, times: 2), rhs: Dice(.d4), mathOperator: .add)
         var sum = 0
         var minValue = 0
         var maxValue = 0
@@ -289,7 +274,6 @@ struct DiceTests {
         #expect(minValue <= 4, "min value")
         #expect(maxValue >= 19, "max value")
 
-        #expect(compoundDice.sides == 8, "sides")
         #expect("\(compoundDice.description)" == "2d8+d4", "description")
     }
 }

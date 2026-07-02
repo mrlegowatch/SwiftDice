@@ -6,8 +6,6 @@
 //  Copyright © 2017 Brian Arnold. All rights reserved.
 //
 
-import Foundation
-
 
 /// General-purpose composition of dice rolls.
 ///
@@ -17,29 +15,31 @@ import Foundation
 public struct CompoundDice: Rollable {
     public let lhs: Rollable
     public let rhs: Rollable
-    public let mathOperator: String
+    public let mathOperator: MathOperator
+
+    /// The arithmetic operators supported between two `Rollable` expressions.
+    public enum MathOperator: String, CaseIterable, Sendable {
+        case add      = "+"
+        case subtract = "-"
+        case multiply = "x"
+        case divide   = "/"
+    }
 
     /// Creates a dice that conforms to the syntax "<times>d<size><mathOperator><modifier>".
     /// All parameters except die are optional; times defaults to 1, modifier defaults to 0,
-    /// and math operator defaults to "+".
-    public init(_ die: Die, times: Int = 1, modifier: Int = 0, mathOperator: String = "+") {
+    /// and math operator defaults to add.
+    public init(_ die: Die, times: Int = 1, modifier: Int = 0, mathOperator: MathOperator = .add) {
         let dice = Dice(die, times: times)
         let modifier = DiceModifier(modifier)
         self.init(lhs: dice, rhs: modifier, mathOperator: mathOperator)
     }
 
     /// Creates a dice from two rollable instances with a math operator.
-    public init(lhs: Rollable, rhs: Rollable, mathOperator: String) {
+    public init(lhs: Rollable, rhs: Rollable, mathOperator: MathOperator) {
         self.lhs = lhs
         self.rhs = rhs
         self.mathOperator = mathOperator
     }
-
-    /// Function signature for a math operator or function.
-    internal typealias MathOperator = @Sendable (Int, Int) -> Int
-
-    /// Mapping of strings to function signatures.
-    internal static let mathOperators: [String: MathOperator] = ["+": (+), "-": (-), "x": (*), "*": (*), "/": (/)]
 
     /// Rolls the dice on both sides and combines them with the math operator,
     /// returning the result.
@@ -47,40 +47,38 @@ public struct CompoundDice: Rollable {
         let lhsRoll = lhs.roll()
         let rhsRoll = rhs.roll()
 
-        guard let operation = Self.mathOperators[mathOperator] else {
-            // Fallback if operator is unknown (shouldn't happen if properly constructed)
-            return DiceRoll(lhsRoll.result, "\(lhsRoll.description) ? \(rhsRoll.description)")
+        let result: Int
+        switch mathOperator {
+        case .add:      result = lhsRoll.result + rhsRoll.result
+        case .subtract: result = lhsRoll.result - rhsRoll.result
+        case .multiply: result = lhsRoll.result * rhsRoll.result
+        case .divide:   result = lhsRoll.result / rhsRoll.result
         }
 
-        let result = operation(lhsRoll.result, rhsRoll.result)
-        let description = "\(lhsRoll.description) \(mathOperator) \(rhsRoll.description)"
-
+        let description = "\(lhsRoll.description) \(mathOperator.rawValue) \(rhsRoll.description)"
         return DiceRoll(result, description)
     }
 
-    /// Returns the number of sides of the left hand dice.
-    public var sides: Int { lhs.sides }
-
     /// Returns a description of the left and right hand sides with the math operator.
-    public var description: String { "\(lhs)\(mathOperator)\(rhs)" }
+    public var description: String { "\(lhs)\(mathOperator.rawValue)\(rhs)" }
 }
 
 // MARK: - Arithmetic Operators
 
 public func +(lhs: some Rollable, rhs: some Rollable) -> CompoundDice {
-    CompoundDice(lhs: lhs, rhs: rhs, mathOperator: "+")
+    CompoundDice(lhs: lhs, rhs: rhs, mathOperator: .add)
 }
 
 public func -(lhs: some Rollable, rhs: some Rollable) -> CompoundDice {
-    CompoundDice(lhs: lhs, rhs: rhs, mathOperator: "-")
+    CompoundDice(lhs: lhs, rhs: rhs, mathOperator: .subtract)
 }
 
 // These operators can take the place of using an explicit DiceModifier in code.
 
 public func +(lhs: some Rollable, rhs: Int) -> CompoundDice {
-    CompoundDice(lhs: lhs, rhs: DiceModifier(rhs), mathOperator: "+")
+    CompoundDice(lhs: lhs, rhs: DiceModifier(rhs), mathOperator: .add)
 }
 
 public func -(lhs: some Rollable, rhs: Int) -> CompoundDice {
-    CompoundDice(lhs: lhs, rhs: DiceModifier(rhs), mathOperator: "-")
+    CompoundDice(lhs: lhs, rhs: DiceModifier(rhs), mathOperator: .subtract)
 }

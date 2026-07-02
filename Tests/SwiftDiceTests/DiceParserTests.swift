@@ -220,7 +220,6 @@ struct DiceParserTests {
         #expect(minValue <= 5, "min value")
         #expect(maxValue >= 16, "max value")
 
-        #expect(formatDice?.sides == 6, "Dice sides")
         if let formatDice = formatDice {
             #expect(formatDice.description == "4d6-L", "SimpleDice description")
         }
@@ -249,7 +248,6 @@ struct DiceParserTests {
         #expect(minValue <= 7, "min value")
         #expect(maxValue >= 34, "max value")
 
-        #expect(formatDice?.sides == 4, "Dice sides")
         if formatDice != nil {
             #expect(formatDice!.description == "2d4+3d12-4", "SimpleDice description")
         }
@@ -279,7 +277,6 @@ struct DiceParserTests {
         #expect(minValue <= 7, "min value")
         #expect(maxValue >= 22, "max value")
 
-        #expect(formatDice?.sides == 4, "Dice sides")
         if formatDice != nil {
             #expect(formatDice!.description == "2d4+d12-2+5", "SimpleDice description")
         }
@@ -309,7 +306,6 @@ struct DiceParserTests {
         #expect(minValue <= 7, "min value")
         #expect(maxValue >= 22, "max value")
 
-        #expect(formatDice?.sides == 4, "Dice sides")
         if formatDice != nil {
             #expect(formatDice!.description == "3d4-L+d12-2+5", "SimpleDice description")
         }
