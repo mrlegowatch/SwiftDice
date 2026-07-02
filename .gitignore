@@ -3,7 +3,6 @@ xcuserdata
 DerivedData
 .swiftpm/xcode/package.xcworkspace/
 .swiftpm/xcode/xcuserdata/
-*.xcuserstate
 
 # Build artifacts
 .build/
