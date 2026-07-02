@@ -1,4 +1,4 @@
-# SwiftDice  ![Build Status](https://github.com/mrlegowatch/SwiftDice/workflows/Swift/badge.svg)
+# SwiftDice  [![Swift](https://github.com/mrlegowatch/RolePlayingCore/actions/workflows/swift.yml/badge.svg)](https://github.com/mrlegowatch/RolePlayingCore/actions/workflows/swift.yml)
 ![Swift Version](https://img.shields.io/badge/Swift-6.0-orange.svg)
 ![Platform](https://img.shields.io/badge/platform-iOS%20%7C%20macOS-lightgrey.svg)
 [![License](https://img.shields.io/github/license/mrlegowatch/SwiftDice)](LICENSE)
