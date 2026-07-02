@@ -64,3 +64,23 @@ public struct CompoundDice: Rollable {
     /// Returns a description of the left and right hand sides with the math operator.
     public var description: String { "\(lhs)\(mathOperator)\(rhs)" }
 }
+
+// MARK: - Arithmetic Operators
+
+public func +(lhs: some Rollable, rhs: some Rollable) -> CompoundDice {
+    CompoundDice(lhs: lhs, rhs: rhs, mathOperator: "+")
+}
+
+public func -(lhs: some Rollable, rhs: some Rollable) -> CompoundDice {
+    CompoundDice(lhs: lhs, rhs: rhs, mathOperator: "-")
+}
+
+// These operators can take the place of using an explicit DiceModifier in code.
+
+public func +(lhs: some Rollable, rhs: Int) -> CompoundDice {
+    CompoundDice(lhs: lhs, rhs: DiceModifier(rhs), mathOperator: "+")
+}
+
+public func -(lhs: some Rollable, rhs: Int) -> CompoundDice {
+    CompoundDice(lhs: lhs, rhs: DiceModifier(rhs), mathOperator: "-")
+}

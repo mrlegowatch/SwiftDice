@@ -58,3 +58,10 @@ public struct DroppingDice: Rollable {
         return "\(dice)-\(drop.rawValue)"
     }
 }
+
+extension Dice {
+    /// Convenience to make code using DroppingDice more readable.
+    public func dropping(_ drop: DroppingDice.Drop) -> DroppingDice {
+        DroppingDice(self, drop: drop)
+    }
+}
