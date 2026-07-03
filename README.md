@@ -21,6 +21,7 @@ All types conform to `Rollable`, which requires a `roll() -> DiceRoll` method an
 | `SelectingDice` | Rolls multiple dice, dropping or keeping the highest or lowest | `(4 * .d6).dropping(.lowest)`, `(4 * .d6).keeping(3, .highest)` |
 | `CompoundDice` | Combines two `Rollable` values with a math operator | `2 * .d8 + 4`, `2 * .d8 + .d4` |
 | `DiceModifier` | A constant value used as a `Rollable` | `DiceModifier(3)` → `"3"` |
+| `FudgeDice` | A Fudge/FATE die with outcomes of -1, 0, or +1 per die rolled | `FudgeDice.dF`, `4 * .dF` |
 
 Supported die sizes: **d4, d6, d8, d10, d12, d20, d100** (also written as `d%`) — the standard polyhedral set. Any positive integer is valid when constructing `Dice` directly or parsing from a string.
 
