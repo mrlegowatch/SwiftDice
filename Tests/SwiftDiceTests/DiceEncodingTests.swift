@@ -13,176 +13,80 @@ import Foundation
 @Suite("Dice Encoding Tests")
 struct DiceEncodingTests {
 
+    private struct EncodableDiceContainer: Encodable {
+        let dice: Rollable
+        enum CodingKeys: String, CodingKey { case dice }
+        func encode(to encoder: Encoder) throws {
+            var container = encoder.container(keyedBy: CodingKeys.self)
+            try container.encode("\(dice)", forKey: .dice)
+        }
+    }
+
+    private struct DecodableDiceContainer: Decodable {
+        let dice: Rollable
+        enum CodingKeys: String, CodingKey { case dice }
+        init(from decoder: Decoder) throws {
+            let container = try decoder.container(keyedBy: CodingKeys.self)
+            dice = try container.decode(Rollable.self, forKey: .dice)
+        }
+    }
+
+    private struct OptionalDiceContainer: Decodable {
+        let dice: Rollable?
+        enum CodingKeys: String, CodingKey { case dice }
+        init(from decoder: Decoder) throws {
+            let container = try decoder.container(keyedBy: CodingKeys.self)
+            dice = try container.decodeIfPresent(Rollable.self, forKey: .dice)
+        }
+    }
+
     @Test("Encoding dice")
     func encodingDice() throws {
-        struct DiceContainer: Encodable {
-            let dice: Rollable
-
-            enum CodingKeys: String, CodingKey {
-                case dice
-            }
-
-            func encode(to encoder: Encoder) throws {
-                var container = encoder.container(keyedBy: CodingKeys.self)
-                try container.encode("\(dice)", forKey: .dice)
-            }
-        }
-
-        let diceContainer = DiceContainer(dice: CompoundDice(.d8, times: 3, modifier: 3, mathOperator: .subtract))
-        let encoder = JSONEncoder()
-        let encoded = try encoder.encode(diceContainer)
-        let deserialized = try JSONSerialization.jsonObject(with: encoded, options: []) as? [String: String]
-        #expect(deserialized?["dice"] == "3d8-3", "encoded dice failed to deserialize as string")
+        let encoded = try JSONEncoder().encode(EncodableDiceContainer(dice: 3 * Dice.d8 - 3))
+        let deserialized = try JSONSerialization.jsonObject(with: encoded) as? [String: String]
+        #expect(deserialized?["dice"] == "3d8-3")
     }
 
     @Test("Decoding dice - typical expression")
     func decodingDiceTypicalExpression() throws {
-        struct DiceContainer: Decodable {
-            let dice: Rollable
-
-            enum CodingKeys: String, CodingKey {
-                case dice
-            }
-
-            init(from decoder: Decoder) throws {
-                let container = try decoder.container(keyedBy: CodingKeys.self)
-                dice = try container.decode(Rollable.self, forKey: .dice)
-            }
-        }
-
-        let traits = """
-        {
-            "dice": "2d6+2"
-        }
-        """.data(using: .utf8)!
-        let decoder = JSONDecoder()
-        let decoded = try decoder.decode(DiceContainer.self, from: traits)
-        #expect(decoded.dice is CompoundDice, "decode as compound dice")
+        let json = #"{"dice": "2d6+2"}"#.data(using: .utf8)!
+        let decoded = try JSONDecoder().decode(DecodableDiceContainer.self, from: json)
+        #expect(decoded.dice is CompoundDice)
     }
 
     @Test("Decoding dice - dice modifier")
     func decodingDiceDiceModifier() throws {
-        struct DiceContainer: Decodable {
-            let dice: Rollable
-
-            enum CodingKeys: String, CodingKey {
-                case dice
-            }
-
-            init(from decoder: Decoder) throws {
-                let container = try decoder.container(keyedBy: CodingKeys.self)
-                dice = try container.decode(Rollable.self, forKey: .dice)
-            }
-        }
-
-        let traits = """
-        {
-            "dice": 5
-        }
-        """.data(using: .utf8)!
-        let decoder = JSONDecoder()
-        let decoded = try decoder.decode(DiceContainer.self, from: traits)
-        #expect(decoded.dice is DiceModifier, "decode as dice modifier")
+        let json = #"{"dice": 5}"#.data(using: .utf8)!
+        let decoded = try JSONDecoder().decode(DecodableDiceContainer.self, from: json)
+        #expect(decoded.dice is DiceModifier)
     }
 
     @Test("Decoding dice - invalid dice string")
-    func decodingDiceInvalidString() throws {
-        struct DiceContainer: Decodable {
-            let dice: Rollable
-
-            enum CodingKeys: String, CodingKey {
-                case dice
-            }
-
-            init(from decoder: Decoder) throws {
-                let container = try decoder.container(keyedBy: CodingKeys.self)
-                dice = try container.decode(Rollable.self, forKey: .dice)
-            }
-        }
-
-        let traits = """
-        {
-            "dice": "Hello Dice"
-        }
-        """.data(using: .utf8)!
-        let decoder = JSONDecoder()
+    func decodingDiceInvalidString() {
+        let json = #"{"dice": "Hello Dice"}"#.data(using: .utf8)!
         #expect(throws: Error.self) {
-            _ = try decoder.decode(DiceContainer.self, from: traits)
+            _ = try JSONDecoder().decode(DecodableDiceContainer.self, from: json)
         }
     }
 
     @Test("Decoding dice if present - typical expression")
     func decodingDiceIfPresentTypicalExpression() throws {
-        struct DiceContainer: Decodable {
-            let dice: Rollable?
-
-            enum CodingKeys: String, CodingKey {
-                case dice
-            }
-
-            init(from decoder: Decoder) throws {
-                let container = try decoder.container(keyedBy: CodingKeys.self)
-                dice = try container.decodeIfPresent(Rollable.self, forKey: .dice)
-            }
-        }
-
-        let traits = """
-        {
-            "dice": "2d6+2"
-        }
-        """.data(using: .utf8)!
-        let decoder = JSONDecoder()
-        let decoded = try decoder.decode(DiceContainer.self, from: traits)
-        #expect(decoded.dice is CompoundDice, "decode as compound dice")
+        let json = #"{"dice": "2d6+2"}"#.data(using: .utf8)!
+        let decoded = try JSONDecoder().decode(OptionalDiceContainer.self, from: json)
+        #expect(decoded.dice is CompoundDice)
     }
 
     @Test("Decoding dice if present - dice modifier")
     func decodingDiceIfPresentDiceModifier() throws {
-        struct DiceContainer: Decodable {
-            let dice: Rollable?
-
-            enum CodingKeys: String, CodingKey {
-                case dice
-            }
-
-            init(from decoder: Decoder) throws {
-                let container = try decoder.container(keyedBy: CodingKeys.self)
-                dice = try container.decodeIfPresent(Rollable.self, forKey: .dice)
-            }
-        }
-
-        let traits = """
-        {
-            "dice": 5
-        }
-        """.data(using: .utf8)!
-        let decoder = JSONDecoder()
-        let decoded = try decoder.decode(DiceContainer.self, from: traits)
-        #expect(decoded.dice is DiceModifier, "decode as dice modifier")
+        let json = #"{"dice": 5}"#.data(using: .utf8)!
+        let decoded = try JSONDecoder().decode(OptionalDiceContainer.self, from: json)
+        #expect(decoded.dice is DiceModifier)
     }
 
     @Test("Decoding dice if present - invalid dice string")
     func decodingDiceIfPresentInvalidString() throws {
-        struct DiceContainer: Decodable {
-            let dice: Rollable?
-
-            enum CodingKeys: String, CodingKey {
-                case dice
-            }
-
-            init(from decoder: Decoder) throws {
-                let container = try decoder.container(keyedBy: CodingKeys.self)
-                dice = try container.decodeIfPresent(Rollable.self, forKey: .dice)
-            }
-        }
-
-        let traits = """
-        {
-            "dice": "Hello Dice"
-        }
-        """.data(using: .utf8)!
-        let decoder = JSONDecoder()
-        let decoded = try decoder.decode(DiceContainer.self, from: traits)
-        #expect(decoded.dice == nil, "Dice should have not been parsed")
+        let json = #"{"dice": "Hello Dice"}"#.data(using: .utf8)!
+        let decoded = try JSONDecoder().decode(OptionalDiceContainer.self, from: json)
+        #expect(decoded.dice == nil)
     }
 }

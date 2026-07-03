@@ -25,15 +25,6 @@ public struct CompoundDice: Rollable {
         case divide   = "/"
     }
 
-    /// Creates a dice that conforms to the syntax "<times>d<size><mathOperator><modifier>".
-    /// All parameters except die are optional; times defaults to 1, modifier defaults to 0,
-    /// and math operator defaults to add.
-    public init(_ die: Die, times: Int = 1, modifier: Int = 0, mathOperator: MathOperator = .add) {
-        let dice = Dice(die, times: times)
-        let modifier = DiceModifier(modifier)
-        self.init(lhs: dice, rhs: modifier, mathOperator: mathOperator)
-    }
-
     /// Creates a dice from two rollable instances with a math operator.
     public init(lhs: Rollable, rhs: Rollable, mathOperator: MathOperator) {
         self.lhs = lhs
@@ -63,7 +54,7 @@ public struct CompoundDice: Rollable {
     public var description: String { "\(lhs)\(mathOperator.rawValue)\(rhs)" }
 }
 
-// MARK: - Arithmetic Operators
+// MARK: - Addition and Subtraction
 
 public func +(lhs: some Rollable, rhs: some Rollable) -> CompoundDice {
     CompoundDice(lhs: lhs, rhs: rhs, mathOperator: .add)
@@ -73,7 +64,24 @@ public func -(lhs: some Rollable, rhs: some Rollable) -> CompoundDice {
     CompoundDice(lhs: lhs, rhs: rhs, mathOperator: .subtract)
 }
 
-// These operators can take the place of using an explicit DiceModifier in code.
+// Typed rhs overloads allow leading-dot shorthand: `2 * .d8 + .d4`, `someRollable + .dF`.
+// Swift resolves `.d4` / `.dF` because the rhs type is concrete, not a generic placeholder.
+
+public func +(lhs: some Rollable, rhs: Dice) -> CompoundDice {
+    CompoundDice(lhs: lhs, rhs: rhs, mathOperator: .add)
+}
+
+public func -(lhs: some Rollable, rhs: Dice) -> CompoundDice {
+    CompoundDice(lhs: lhs, rhs: rhs, mathOperator: .subtract)
+}
+
+public func +(lhs: some Rollable, rhs: FudgeDice) -> CompoundDice {
+    CompoundDice(lhs: lhs, rhs: rhs, mathOperator: .add)
+}
+
+public func -(lhs: some Rollable, rhs: FudgeDice) -> CompoundDice {
+    CompoundDice(lhs: lhs, rhs: rhs, mathOperator: .subtract)
+}
 
 public func +(lhs: some Rollable, rhs: Int) -> CompoundDice {
     CompoundDice(lhs: lhs, rhs: DiceModifier(rhs), mathOperator: .add)
@@ -81,4 +89,26 @@ public func +(lhs: some Rollable, rhs: Int) -> CompoundDice {
 
 public func -(lhs: some Rollable, rhs: Int) -> CompoundDice {
     CompoundDice(lhs: lhs, rhs: DiceModifier(rhs), mathOperator: .subtract)
+}
+
+// MARK: - Multiplication and Division
+
+// Note: `Int * Dice` (the "times" operator) and `Rollable * Int` have opposite
+// parameter order and do not conflict, so `5 * .d4 * 10` evaluates as
+// `(5 * .d4) * 10` → CompoundDice with .multiply.
+
+public func *(lhs: some Rollable, rhs: some Rollable) -> CompoundDice {
+    CompoundDice(lhs: lhs, rhs: rhs, mathOperator: .multiply)
+}
+
+public func /(lhs: some Rollable, rhs: some Rollable) -> CompoundDice {
+    CompoundDice(lhs: lhs, rhs: rhs, mathOperator: .divide)
+}
+
+public func *(lhs: some Rollable, rhs: Int) -> CompoundDice {
+    CompoundDice(lhs: lhs, rhs: DiceModifier(rhs), mathOperator: .multiply)
+}
+
+public func /(lhs: some Rollable, rhs: Int) -> CompoundDice {
+    CompoundDice(lhs: lhs, rhs: DiceModifier(rhs), mathOperator: .divide)
 }
