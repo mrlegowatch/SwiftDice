@@ -12,11 +12,12 @@ SwiftDice provides a `Rollable` protocol and several concrete types covering the
 
 ## Dice Types
 
-All types conform to `Rollable`, which requires a `roll() -> DiceRoll` method, a `sides` property, and `CustomStringConvertible`. A `DiceRoll` carries both the integer `result` and a human-readable `description` of the intermediate values (e.g. `"(4 + 2 + 6 + 1) - 1"`).
+All types conform to `Rollable`, which requires a `roll() -> DiceRoll` method and `CustomStringConvertible`. A `DiceRoll` carries both the integer `result` and a human-readable `description` of the intermediate values (e.g. `"((4 + 2 + 6 + 1) - 1)"`).
 
 | Type | Description | Example |
 |---|---|---|
 | `Dice` | One or more of the same die | `Dice.d8`, `2 * .d8` |
+| `FudgeDice` | A Fudge/FATE die with outcomes of -1, 0, or +1 per die rolled | `FudgeDice.dF`, `4 * .dF` |
 | `SelectingDice` | Rolls multiple dice, dropping or keeping the highest or lowest | `(4 * .d6).dropping(.lowest)`, `(4 * .d6).keeping(3, .highest)` |
 | `CompoundDice` | Combines two `Rollable` values with a math operator | `2 * .d8 + 4`, `2 * .d8 + .d4` |
 | `DiceModifier` | A constant value used as a `Rollable` | `DiceModifier(3)` → `"3"` |
@@ -39,7 +40,7 @@ Dice.d20                              // d20
 (2 * .d6).exploding                   // 2d6! (reroll and add on max)
 (4 * .d6).rerolling(below: 1)         // 4d6r1 (reroll 1s once, keep new result)
 5 * .d4 * 10                          // 5d4x10
-Dice.d100 / 10                        // d100/10
+Dice.d100 / 10                        // d%/10
 ```
 
 Wherever `*` appears, the `Dice.` prefix can be omitted — the operator's `rhs: Dice` signature provides the type context. For example:
