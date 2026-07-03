@@ -33,6 +33,8 @@ Dice.d20                              // d20
 2 * .d8 + 4                           // 2d8+4
 2 * .d8 + .d4                         // 2d8+d4
 (4 * .d6).dropping(.lowest)           // 4d6-L
+5 * .d4 * 10                          // 5d4x10
+Dice.d100 / 10                        // d100/10
 ```
 
 Wherever `*` appears, the `Dice.` prefix can be omitted — the operator's `rhs: Dice` signature provides the type context. For example:

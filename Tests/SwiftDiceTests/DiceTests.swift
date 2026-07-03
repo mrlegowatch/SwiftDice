@@ -185,6 +185,24 @@ struct DiceTests {
         #expect((-1...10).contains(roll.result))
     }
 
+    @Test("Multiply operator with modifier")
+    func multiplyOperatorWithModifier() {
+        let dice = 5 * .d4 * 10
+        #expect(dice.description == "5d4x10")
+        for _ in 0..<sampleSize {
+            #expect((50...200).contains(dice.roll().result))
+        }
+    }
+
+    @Test("Divide operator with modifier")
+    func divideOperatorWithModifier() {
+        let dice = Dice.d100 / 10
+        #expect(dice.description == "d100/10")
+        for _ in 0..<sampleSize {
+            #expect((0...10).contains(dice.roll().result))
+        }
+    }
+
     @Test("Addition operator with dice")
     func additionOperatorWithDice() {
         let dice = 2 * .d8 + .d4

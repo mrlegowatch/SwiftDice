@@ -90,3 +90,23 @@ public func +(lhs: some Rollable, rhs: Int) -> CompoundDice {
 public func -(lhs: some Rollable, rhs: Int) -> CompoundDice {
     CompoundDice(lhs: lhs, rhs: DiceModifier(rhs), mathOperator: .subtract)
 }
+
+// Multiply and divide operators. Note: `Int * Dice` (the "times" operator) and
+// `Rollable * Int` have opposite parameter order and do not conflict, so
+// `5 * .d4 * 10` evaluates as `(5 * .d4) * 10` → CompoundDice with .multiply.
+
+public func *(lhs: some Rollable, rhs: some Rollable) -> CompoundDice {
+    CompoundDice(lhs: lhs, rhs: rhs, mathOperator: .multiply)
+}
+
+public func /(lhs: some Rollable, rhs: some Rollable) -> CompoundDice {
+    CompoundDice(lhs: lhs, rhs: rhs, mathOperator: .divide)
+}
+
+public func *(lhs: some Rollable, rhs: Int) -> CompoundDice {
+    CompoundDice(lhs: lhs, rhs: DiceModifier(rhs), mathOperator: .multiply)
+}
+
+public func /(lhs: some Rollable, rhs: Int) -> CompoundDice {
+    CompoundDice(lhs: lhs, rhs: DiceModifier(rhs), mathOperator: .divide)
+}
