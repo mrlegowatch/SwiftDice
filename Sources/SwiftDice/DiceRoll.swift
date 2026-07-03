@@ -7,7 +7,7 @@
 //
 
 /// Encapsulates a result with its intermediate values.
-public struct DiceRoll: CustomStringConvertible, Sendable {
+public struct DiceRoll: CustomStringConvertible, Equatable, Sendable {
 
     /// The result of the roll.
     public let result: Int
@@ -17,7 +17,7 @@ public struct DiceRoll: CustomStringConvertible, Sendable {
     public let description: String
 
     /// Creates a roll with its accompanying description of intermediate values.
-    init(_ result: Int, _ description: String) {
+    public init(_ result: Int, _ description: String) {
         self.result = result
         self.description = description
     }

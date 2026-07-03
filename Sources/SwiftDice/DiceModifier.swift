@@ -9,7 +9,7 @@
 
 /// A constant value that participates as a `Rollable`, used as a modifier in compound expressions.
 /// Construct via the `+` or `-` operators on `Rollable` rather than directly.
-public struct DiceModifier: Rollable {
+public struct DiceModifier: Rollable, Equatable {
     public let modifier: Int
 
     public init(_ modifier: Int) {
