@@ -197,7 +197,7 @@ struct DiceTests {
     @Test("Divide operator with modifier")
     func divideOperatorWithModifier() {
         let dice = Dice.d100 / 10
-        #expect(dice.description == "d100/10")
+        #expect(dice.description == "d%/10")
         for _ in 0..<sampleSize {
             #expect((0...10).contains(dice.roll().result))
         }
