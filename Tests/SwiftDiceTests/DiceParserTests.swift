@@ -359,6 +359,66 @@ struct DiceParserTests {
         #expect(dFplus2?.description == "dF+2")
     }
 
+    @Test("Dropping lowest two")
+    func droppingLowestTwo() {
+        let formatString = "4d6-L2"
+        let formatDice = formatString.parseDice
+        #expect(formatDice != nil, "4d6-L2 should parse")
+        #expect(formatDice?.description == "4d6-L2")
+        if let dice = formatDice {
+            for _ in 0..<sampleSize {
+                // Roll 4d6, keep 2 highest: min = 2×1 = 2, max = 2×6 = 12
+                #expect((2...12).contains(dice.roll().result))
+            }
+        }
+    }
+
+    @Test("Dropping highest two")
+    func droppingHighestTwo() {
+        let formatString = "5d6-H2"
+        let formatDice = formatString.parseDice
+        #expect(formatDice != nil, "5d6-H2 should parse")
+        #expect(formatDice?.description == "5d6-H2")
+        if let dice = formatDice {
+            for _ in 0..<sampleSize {
+                // Roll 5d6, keep 3 lowest: min = 3×1 = 3, max = 3×6 = 18
+                #expect((3...18).contains(dice.roll().result))
+            }
+        }
+    }
+
+    @Test("Keep highest notation")
+    func keepHighestString() {
+        let dice = "4d6kh3".parseDice
+        #expect(dice != nil, "4d6kh3 should parse")
+        #expect(dice?.description == "4d6kh3")
+        if let dice = dice {
+            for _ in 0..<sampleSize {
+                // Roll 4d6, keep 3 highest: min = 3, max = 18
+                #expect((3...18).contains(dice.roll().result))
+            }
+        }
+    }
+
+    @Test("Keep lowest notation (disadvantage)")
+    func keepLowestString() {
+        let dice = "2d20kl1".parseDice
+        #expect(dice != nil, "2d20kl1 should parse")
+        #expect(dice?.description == "2d20kl1")
+        if let dice = dice {
+            for _ in 0..<sampleSize {
+                #expect((1...20).contains(dice.roll().result))
+            }
+        }
+    }
+
+    @Test("Keep highest advantage")
+    func keepHighestAdvantage() {
+        let dice = "2d20kh1".parseDice
+        #expect(dice != nil, "2d20kh1 should parse")
+        #expect(dice?.description == "2d20kh1")
+    }
+
     @Test("Invalid dice format strings", arguments: [
         ("dhello", "unsupported dice number"),
         ("2+elephants", "unsupported character tokens"),
@@ -369,7 +429,8 @@ struct DiceParserTests {
         ("3 4", "consecutive numbers"),
         ("3++4", "consecutive math operators"),
         ("d4d4", "consecutive dice expressions"),
-        ("dd4", "consecutive dice 'd' characters")
+        ("dd4", "consecutive dice 'd' characters"),
+        ("2d4k", "keep missing method character")
     ])
     func invalidDiceFormatStrings(badFormatString: String, reason: String) {
         let roll = badFormatString.parseDice

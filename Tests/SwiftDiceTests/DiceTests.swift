@@ -237,6 +237,48 @@ struct DiceTests {
         #expect(dice.description == "3d4-H")
     }
 
+    @Test("Dropping dice lowest two")
+    func droppingDiceLowestTwo() {
+        let dice = (5 * Dice.d6).dropping(2, .lowest)
+        #expect(dice.sides == 6)
+        #expect(dice.description == "5d6-L2")
+        for _ in 0..<sampleSize {
+            // Roll 5d6, keep 3 highest: min = 3×1 = 3, max = 3×6 = 18
+            #expect((3...18).contains(dice.roll().result))
+        }
+    }
+
+    @Test("Dropping method highest two")
+    func droppingMethodHighestTwo() {
+        let dice = (5 * Dice.d4).dropping(2, .highest)
+        #expect(dice.sides == 4)
+        #expect(dice.description == "5d4-H2")
+        for _ in 0..<sampleSize {
+            // Roll 5d4, keep 3 lowest: min = 3×1 = 3, max = 3×4 = 12
+            #expect((3...12).contains(dice.roll().result))
+        }
+    }
+
+    @Test("Keeping highest (advantage)")
+    func keepingHighest() {
+        let dice = (2 * Dice.d20).keeping(.highest)
+        #expect(dice.sides == 20)
+        #expect(dice.description == "2d20kh1")
+        for _ in 0..<sampleSize {
+            #expect((1...20).contains(dice.roll().result))
+        }
+    }
+
+    @Test("Keeping count highest")
+    func keepingCountHighest() {
+        let dice = (4 * Dice.d6).keeping(3, .highest)
+        #expect(dice.sides == 6)
+        #expect(dice.description == "4d6kh3")
+        for _ in 0..<sampleSize {
+            #expect((3...18).contains(dice.roll().result))
+        }
+    }
+
     @Test("Compound dice with dice")
     func compoundDiceWithDice() {
         let compoundDice = 2 * Dice.d8 + Dice.d4

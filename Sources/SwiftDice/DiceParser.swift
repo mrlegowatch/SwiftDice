@@ -53,7 +53,8 @@ enum Token {
     case number(Int)
     case mathOperator(String)
     case die
-    case drop(String)
+    case drop(String, Int)
+    case keep(String, Int)
     case fudge
 
     // MARK: Character Sets
@@ -61,7 +62,7 @@ enum Token {
     private static let mathOperatorCharacters = CharacterSet(charactersIn: "+-x*/")
     private static let dieCharacters = CharacterSet(charactersIn: "dD")
     private static let dropCharacters = CharacterSet(
-        charactersIn: DroppingDice.Drop.allCases.map(\.rawValue).joined()
+        charactersIn: SelectingDice.Selection.Kind.allCases.map(\.rawValue).joined()
     )
     private static let percentCharacters = CharacterSet(charactersIn: "%")
     private static let fudgeCharacters = CharacterSet(charactersIn: "fF")
@@ -75,7 +76,7 @@ enum Token {
         case _ where Self.dieCharacters.contains(scalar):
             self = .die
         case _ where Self.dropCharacters.contains(scalar):
-            self = .drop(String(scalar))
+            self = .drop(String(scalar), 1)
         case _ where Self.percentCharacters.contains(scalar):
             self = .number(100)
         case _ where Self.fudgeCharacters.contains(scalar):
@@ -89,6 +90,11 @@ enum Token {
 
     var isDropping: Bool {
         if case .drop = self { return true }
+        return false
+    }
+
+    var isKeeping: Bool {
+        if case .keep = self { return true }
         return false
     }
 }
@@ -120,32 +126,65 @@ private struct NumberBuffer {
 /// - Returns: An array of tokens representing the parsed string
 /// - Throws: `DiceParseError.invalidCharacter` if an unknown character is encountered
 func tokenize(_ string: String) throws -> [Token] {
+    let keepCharacters = CharacterSet(charactersIn: "kK")
     var tokens: [Token] = []
     var numberBuffer = NumberBuffer()
+    let scalars = string.unicodeScalars
+    var index = scalars.startIndex
 
-    for scalar in string.unicodeScalars {
+    while index < scalars.endIndex {
+        let scalar = scalars[index]
+        index = scalars.index(after: index)
+
         if CharacterSet.decimalDigits.contains(scalar) {
             numberBuffer.append(scalar)
         } else {
-            if let value = numberBuffer.flush() {
-                tokens.append(.number(value))
-            }
-
+            if let value = numberBuffer.flush() { tokens.append(.number(value)) }
             guard !CharacterSet.whitespacesAndNewlines.contains(scalar) else { continue }
+
+            if keepCharacters.contains(scalar) {
+                guard index < scalars.endIndex,
+                      let kind = SelectingDice.Selection.Kind(rawValue: String(scalars[index]).uppercased()) else {
+                    throw DiceParseError.invalidCharacter(String(scalar))
+                }
+                tokens.append(.keep(kind.rawValue, 1))
+                index = scalars.index(after: index)
+                continue
+            }
 
             guard let token = Token(from: scalar) else {
                 throw DiceParseError.invalidCharacter(String(scalar))
             }
-
             tokens.append(token)
         }
     }
 
-    if let value = numberBuffer.flush() {
-        tokens.append(.number(value))
-    }
+    if let value = numberBuffer.flush() { tokens.append(.number(value)) }
+    return mergeSelectingCount(tokens)
+}
 
-    return tokens
+/// Merges `.drop`/`.keep` tokens immediately followed by `.number(n)` into a single token,
+/// supporting notation like `"4d6-L2"` and `"4d6kh3"`.
+private func mergeSelectingCount(_ tokens: [Token]) -> [Token] {
+    var result: [Token] = []
+    var i = 0
+    while i < tokens.count {
+        if case .drop(let char, _) = tokens[i],
+           i + 1 < tokens.count,
+           case .number(let count) = tokens[i + 1] {
+            result.append(.drop(char, count))
+            i += 2
+        } else if case .keep(let char, _) = tokens[i],
+                  i + 1 < tokens.count,
+                  case .number(let count) = tokens[i + 1] {
+            result.append(.keep(char, count))
+            i += 2
+        } else {
+            result.append(tokens[i])
+            i += 1
+        }
+    }
+    return result
 }
 
 // MARK: - Parser State
@@ -212,19 +251,34 @@ private struct DiceParserState {
     /// Parses a dropping dice modifier.
     ///
     /// - Throws: `DiceParseError` if preconditions are not met
-    mutating func parse(drop: String) throws {
+    mutating func parse(drop: String, count: Int) throws {
         guard let dice = lastDice as? Dice else {
             throw DiceParseError.missingSimpleDice
         }
         guard lastMathOperator == .subtract else {
             throw DiceParseError.missingMinus
         }
-        guard let diceDrop = DroppingDice.Drop(rawValue: drop) else {
+        guard let kind = SelectingDice.Selection.Kind(rawValue: drop) else {
             throw DiceParseError.invalidCharacter(drop)
         }
 
-        lastDice = DroppingDice(dice, drop: diceDrop)
+        lastDice = SelectingDice(dice, selection: .init(kind: kind, count: count))
         lastMathOperator = nil
+    }
+
+    /// Parses a keeping dice modifier (kh/kl notation), converting to the equivalent drop selection.
+    ///
+    /// - Throws: `DiceParseError` if preconditions are not met
+    mutating func parse(keep: String, count: Int) throws {
+        guard let dice = lastDice as? Dice else {
+            throw DiceParseError.missingSimpleDice
+        }
+        guard let kind = SelectingDice.Selection.Kind(rawValue: keep) else {
+            throw DiceParseError.invalidCharacter(keep)
+        }
+        let dropCount = max(0, dice.times - count)
+        let dropKind: SelectingDice.Selection.Kind = kind == .highest ? .lowest : .highest
+        lastDice = SelectingDice(dice, selection: .init(kind: dropKind, count: dropCount), method: .keeping)
     }
 
     /// Parses a math operator.
@@ -304,8 +358,11 @@ func parse(_ tokens: [Token]) throws -> Rollable? {
         case .fudge:
             try state.parseFudge()
 
-        case .drop(let drop):
-            try state.parse(drop: drop)
+        case .drop(let drop, let count):
+            try state.parse(drop: drop, count: count)
+
+        case .keep(let keep, let count):
+            try state.parse(keep: keep, count: count)
 
         case .mathOperator(let math):
             if !isNextTokenDropping(tokens, after: index) {
@@ -327,12 +384,15 @@ public extension String {
 
     /// Creates a `Rollable` instance from a dice notation string.
     ///
-    /// Supported format: `[<times>]d<sides>[<mathOperator><modifier>|-<dropping>]*`
+    /// Supported format: `[<times>]d<sides>[<mathOperator><modifier>|-<dropping>|kh<n>|kl<n>]*`
     ///
     /// Examples:
     /// - `"d8"` → 8-sided die
     /// - `"2d12+2"` → Two 12-sided dice plus 2
-    /// - `"4d6-L"` → Four 6-sided dice, drop lowest
+    /// - `"4d6-L"` → Four 6-sided dice, drop one lowest
+    /// - `"4d6-L2"` → Four 6-sided dice, drop two lowest
+    /// - `"4d6kh3"` → Four 6-sided dice, keep three highest
+    /// - `"2d20kl1"` → Two d20, keep one lowest (disadvantage)
     /// - `"1"` → Constant modifier of 1
     /// - `"2d4+3d12-4"` → Compound expression
     /// - `"4dF"` → Four Fudge dice
