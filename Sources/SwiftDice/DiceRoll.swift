@@ -1,6 +1,6 @@
 //
 //  DiceRoll.swift
-//  RolePlayingCore
+//  SwiftDice
 //
 //  Created by Brian Arnold on 10/15/18.
 //  Copyright © 2018 Brian Arnold. All rights reserved.
