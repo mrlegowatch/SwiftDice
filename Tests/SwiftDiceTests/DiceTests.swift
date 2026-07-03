@@ -9,135 +9,61 @@
 import Testing
 import SwiftDice
 
-/// Use a sample size large enough to hit relatively tight ranges of
-/// expected mean, min and max values below.
-let sampleSize = 1024
-
-/// Consequences of testing with the random number generator are:
-///
-///  - Tolerance may be wide enough in some cases that they may not catch all regressions (false positives)
-///  - Once in a blue moon, tests may fail just outside of the tolerance (false negatives)
-///
 @Suite("Dice Tests")
 struct DiceTests {
 
     @Test("Dice d12")
     func diceD12() {
         let dice = Dice.d12
-
-        var sum = 0
-        var minValue = 0
-        var maxValue = 0
-        for _ in 0 ..< sampleSize {
-            let roll = dice.roll().result
-            #expect((1...12).contains(roll), "rolling d12, got \(roll)")
-            sum += roll
-            minValue = minValue == 0 ? roll : min(minValue, roll)
-            maxValue = maxValue == 0 ? roll : max(maxValue, roll)
-        }
-        let mean = Double(sum)/Double(sampleSize)
-        #expect((6.0...7.0).contains(mean), "expected mean around 6.5, got \(mean)")
-
-        #expect(minValue <= 1, "min value")
-        #expect(maxValue >= 12, "max value")
-
-        #expect(dice.sides == 12, "sides")
-        #expect("\(dice.description)" == "d12", "description")
+        let sample = rollSample(dice, in: 1...12)
+        #expect((6.0...7.0).contains(sample.mean), "expected mean around 6.5, got \(sample.mean)")
+        #expect(sample.min <= 1)
+        #expect(sample.max >= 12)
+        #expect(dice.sides == 12)
+        #expect(dice.description == "d12")
     }
 
     @Test("Dice 2d8")
     func dice2d8() {
         let dice = 2 * Dice.d8
-
-        var sum = 0
-        var minValue = 0
-        var maxValue = 0
-        for _ in 0 ..< sampleSize {
-            let roll = dice.roll().result
-            #expect((2...16).contains(roll), "rolling 2d8, got \(roll)")
-            sum += roll
-            minValue = minValue == 0 ? roll : min(minValue, roll)
-            maxValue = maxValue == 0 ? roll : max(maxValue, roll)
-        }
-        let mean = Double(sum)/Double(sampleSize)
-        #expect((7.5...9.5).contains(mean), "expected mean around 8.5, got \(mean)")
-
-        #expect(minValue == 2, "min value")
-        #expect(maxValue == 16, "max value")
-
-        #expect(dice.sides == 8, "sides")
-        #expect("\(dice.description)" == "2d8", "description")
+        let sample = rollSample(dice, in: 2...16)
+        #expect((7.5...9.5).contains(sample.mean), "expected mean around 8.5, got \(sample.mean)")
+        #expect(sample.min == 2)
+        #expect(sample.max == 16)
+        #expect(dice.sides == 8)
+        #expect(dice.description == "2d8")
     }
 
     @Test("Dropping dice lowest")
     func droppingDiceLowest() {
         let dice = (4 * Dice.d6).dropping(.lowest)
-
-        var sum = 0
-        var minValue = 0
-        var maxValue = 0
-        for _ in 0 ..< sampleSize {
-            let roll = dice.roll().result
-            #expect((3...18).contains(roll), "rolling 4d6-L, got \(roll)")
-            sum += roll
-            minValue = minValue == 0 ? roll : min(minValue, roll)
-            maxValue = maxValue == 0 ? roll : max(maxValue, roll)
-        }
-        let mean = Double(sum)/Double(sampleSize)
-        #expect((11.0...13.5).contains(mean), "expected mean around 12.25, got \(mean)")
-
-        #expect(minValue <= 5, "min value")
-        #expect(maxValue >= 16, "max value")
-
-        #expect(dice.sides == 6, "sides")
-        #expect("\(dice.description)" == "4d6-L", "description")
+        let sample = rollSample(dice, in: 3...18)
+        #expect((11.0...13.5).contains(sample.mean), "expected mean around 12.25, got \(sample.mean)")
+        #expect(sample.min <= 5)
+        #expect(sample.max >= 16)
+        #expect(dice.sides == 6)
+        #expect(dice.description == "4d6-L")
     }
 
     @Test("Dropping dice highest")
     func droppingDiceHighest() {
         let dice = (3 * Dice.d4).dropping(.highest)
-
-        var sum = 0
-        var minValue = 0
-        var maxValue = 0
-        for _ in 0 ..< sampleSize {
-            let roll = dice.roll().result
-            #expect((2...8).contains(roll), "rolling 3d4-H, got \(roll)")
-            sum += roll
-            minValue = minValue == 0 ? roll : min(minValue, roll)
-            maxValue = maxValue == 0 ? roll : max(maxValue, roll)
-        }
-        let mean = Double(sum)/Double(sampleSize)
-        #expect((3.7...4.3).contains(mean), "expected mean around 4, got \(mean)")
-
-        #expect(minValue == 2, "min value")
-        #expect(maxValue == 8, "max value")
-
-        #expect(dice.sides == 4, "sides")
-        #expect("\(dice.description)" == "3d4-H", "description")
+        let sample = rollSample(dice, in: 2...8)
+        #expect((3.7...4.3).contains(sample.mean), "expected mean around 4, got \(sample.mean)")
+        #expect(sample.min == 2)
+        #expect(sample.max == 8)
+        #expect(dice.sides == 4)
+        #expect(dice.description == "3d4-H")
     }
 
     @Test("Compound dice with modifier")
     func compoundDiceWithModifier() {
-        let compoundDice = 2 * Dice.d8 + 4
-
-        var sum = 0
-        var minValue = 0
-        var maxValue = 0
-        for _ in 0 ..< sampleSize {
-            let roll = compoundDice.roll().result
-            #expect((6...20).contains(roll), "rolling 2d8+4, got \(roll)")
-            sum += roll
-            minValue = minValue == 0 ? roll : min(minValue, roll)
-            maxValue = maxValue == 0 ? roll : max(maxValue, roll)
-        }
-        let mean = Double(sum)/Double(sampleSize)
-        #expect((12.0...14.0).contains(mean), "expected mean around 13.0, got \(mean)")
-
-        #expect(minValue == 6, "min value")
-        #expect(maxValue == 20, "max value")
-
-        #expect("\(compoundDice.description)" == "2d8+4", "description")
+        let dice = 2 * Dice.d8 + 4
+        let sample = rollSample(dice, in: 6...20)
+        #expect((12.0...14.0).contains(sample.mean), "expected mean around 13.0, got \(sample.mean)")
+        #expect(sample.min == 6)
+        #expect(sample.max == 20)
+        #expect(dice.description == "2d8+4")
     }
 
     @Test("Dice static shorthands")
@@ -189,36 +115,28 @@ struct DiceTests {
     func multiplyOperatorWithModifier() {
         let dice = 5 * .d4 * 10
         #expect(dice.description == "5d4x10")
-        for _ in 0..<sampleSize {
-            #expect((50...200).contains(dice.roll().result))
-        }
+        rollSample(dice, in: 50...200)
     }
 
     @Test("Divide operator with modifier")
     func divideOperatorWithModifier() {
         let dice = Dice.d100 / 10
         #expect(dice.description == "d%/10")
-        for _ in 0..<sampleSize {
-            #expect((0...10).contains(dice.roll().result))
-        }
+        rollSample(dice, in: 0...10)
     }
 
     @Test("Addition operator with dice")
     func additionOperatorWithDice() {
         let dice = 2 * .d8 + .d4
         #expect(dice.description == "2d8+d4")
-        for _ in 0..<sampleSize {
-            #expect((3...20).contains(dice.roll().result))
-        }
+        rollSample(dice, in: 3...20)
     }
 
     @Test("Subtraction operator with dice")
     func subtractionOperatorWithDice() {
         let dice = 2 * .d8 - .d4
         #expect(dice.description == "2d8-d4")
-        for _ in 0..<sampleSize {
-            #expect((-2...15).contains(dice.roll().result))
-        }
+        rollSample(dice, in: -2...15)
     }
 
     @Test("Dropping method lowest")
@@ -242,10 +160,7 @@ struct DiceTests {
         let dice = (5 * Dice.d6).dropping(2, .lowest)
         #expect(dice.sides == 6)
         #expect(dice.description == "5d6-L2")
-        for _ in 0..<sampleSize {
-            // Roll 5d6, keep 3 highest: min = 3×1 = 3, max = 3×6 = 18
-            #expect((3...18).contains(dice.roll().result))
-        }
+        rollSample(dice, in: 3...18)
     }
 
     @Test("Dropping method highest two")
@@ -253,10 +168,7 @@ struct DiceTests {
         let dice = (5 * Dice.d4).dropping(2, .highest)
         #expect(dice.sides == 4)
         #expect(dice.description == "5d4-H2")
-        for _ in 0..<sampleSize {
-            // Roll 5d4, keep 3 lowest: min = 3×1 = 3, max = 3×4 = 12
-            #expect((3...12).contains(dice.roll().result))
-        }
+        rollSample(dice, in: 3...12)
     }
 
     @Test("Keeping highest (advantage)")
@@ -264,9 +176,7 @@ struct DiceTests {
         let dice = (2 * Dice.d20).keeping(.highest)
         #expect(dice.sides == 20)
         #expect(dice.description == "2d20kh1")
-        for _ in 0..<sampleSize {
-            #expect((1...20).contains(dice.roll().result))
-        }
+        rollSample(dice, in: 1...20)
     }
 
     @Test("Keeping count highest")
@@ -274,9 +184,7 @@ struct DiceTests {
         let dice = (4 * Dice.d6).keeping(3, .highest)
         #expect(dice.sides == 6)
         #expect(dice.description == "4d6kh3")
-        for _ in 0..<sampleSize {
-            #expect((3...18).contains(dice.roll().result))
-        }
+        rollSample(dice, in: 3...18)
     }
 
     @Test("Exploding dice description")
@@ -310,22 +218,16 @@ struct DiceTests {
         #expect((2 * .d6.rerolling(below: 1)).description == "2d6r1")
     }
 
-    @Test("Rerolling dice rolls at least one")
+    @Test("Rerolling dice rolls in range")
     func rerollingDiceRolls() {
-        let dice = Dice.d6.rerolling(below: 1)
-        for _ in 0..<sampleSize {
-            #expect((1...6).contains(dice.roll().result))
-        }
+        rollSample(Dice.d6.rerolling(below: 1), in: 1...6)
     }
 
     @Test("Rerolling dice with dropping")
     func rerollingDiceWithDropping() {
-        // 4d6 reroll 1s, drop lowest — classic D&D ability score roll variant
         let dice = (4 * Dice.d6).rerolling(below: 1).dropping(.lowest)
         #expect(dice.description == "4d6r1-L")
-        for _ in 0..<sampleSize {
-            #expect((3...18).contains(dice.roll().result))
-        }
+        rollSample(dice, in: 3...18)
     }
 
     @Test("Rerolling and exploding dice")
@@ -339,24 +241,12 @@ struct DiceTests {
 
     @Test("Compound dice with dice")
     func compoundDiceWithDice() {
-        let compoundDice = 2 * Dice.d8 + Dice.d4
-        var sum = 0
-        var minValue = 0
-        var maxValue = 0
-        for _ in 0 ..< sampleSize {
-            let roll = compoundDice.roll().result
-            #expect((3...20).contains(roll), "rolling 2d8+d4, got \(roll)")
-            sum += roll
-            minValue = minValue == 0 ? roll : min(minValue, roll)
-            maxValue = maxValue == 0 ? roll : max(maxValue, roll)
-        }
-        let mean = Double(sum)/Double(sampleSize)
-        #expect((11.0...12.0).contains(mean), "expected mean around 11.5, got \(mean)")
-
-        #expect(minValue <= 4, "min value")
-        #expect(maxValue >= 19, "max value")
-
-        #expect("\(compoundDice.description)" == "2d8+d4", "description")
+        let dice = 2 * Dice.d8 + Dice.d4
+        let sample = rollSample(dice, in: 3...20)
+        #expect((11.0...12.0).contains(sample.mean), "expected mean around 11.5, got \(sample.mean)")
+        #expect(sample.min <= 4)
+        #expect(sample.max >= 19)
+        #expect(dice.description == "2d8+d4")
     }
 
     // Client-side success pool built on rollAll() — demonstrates the extension point
@@ -369,7 +259,6 @@ struct DiceTests {
 
     @Test("Success pool via rollAll (client-side example)")
     func successPool() {
-        // 5d10, count hits >= 6 (Shadowrun-style)
         let pool = SuccessPool(dice: 5 * .d10, threshold: 6)
         for _ in 0..<sampleSize {
             #expect((0...5).contains(pool.roll()))
@@ -406,17 +295,13 @@ struct DiceTests {
     func additionOperatorWithFudgeDice() {
         let dice = 2 * .d8 + .dF
         #expect(dice.description == "2d8+dF")
-        for _ in 0..<sampleSize {
-            #expect((1...17).contains(dice.roll().result))
-        }
+        rollSample(dice, in: 1...17)
     }
 
     @Test("Subtraction operator with FudgeDice")
     func subtractionOperatorWithFudgeDice() {
         let dice = 2 * .d8 - .dF
         #expect(dice.description == "2d8-dF")
-        for _ in 0..<sampleSize {
-            #expect((1...17).contains(dice.roll().result))
-        }
+        rollSample(dice, in: 1...17)
     }
 }
