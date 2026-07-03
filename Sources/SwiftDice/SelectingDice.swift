@@ -10,11 +10,11 @@
 /// A selecting dice rolls a set of dice and counts only a subset of results,
 /// dropping the rest. Supports both dropping notation (`4d6-L`) and keeping
 /// notation (`4d6kh3`), with `description` reflecting which method it was created for.
-public struct SelectingDice: Rollable {
+public struct SelectingDice: Rollable, Equatable {
     public let dice: Dice
 
     /// Describes which end of the distribution to drop and how many dice to drop.
-    public struct Selection: Sendable {
+    public struct Selection: Equatable, Sendable {
         /// Whether to drop from the lowest or highest end of the roll distribution.
         public enum Kind: String, CaseIterable, Sendable {
             case lowest  = "L"

@@ -12,9 +12,11 @@ import SwiftDice
 @Suite("Dice Parser Tests")
 struct DiceParserTests {
 
+    let parser = DiceParser()
+
     @Test("Dice format string")
     func diceFormatString() throws {
-        let dice = try #require("d12".parseDice)
+        let dice = try parser.parse("d12")
         #expect(dice.description == "d12")
         let sample = rollSample(dice, in: 1...12)
         #expect((6.0...7.0).contains(sample.mean), "expected mean around 6.5, got \(sample.mean)")
@@ -25,7 +27,7 @@ struct DiceParserTests {
     // Tests both lowercase and uppercase 'd'; both should normalize to "2d10".
     @Test("Dice times string", arguments: ["2d10", "2D10"])
     func diceTimesString(formatString: String) throws {
-        let dice = try #require(formatString.parseDice)
+        let dice = try parser.parse(formatString)
         #expect(dice.description == "2d10")
         let sample = rollSample(dice, in: 2...20)
         #expect((10.0...12.0).contains(sample.mean), "expected mean around 11.0, got \(sample.mean)")
@@ -36,7 +38,7 @@ struct DiceParserTests {
 
     @Test("Dice add modifier")
     func diceAddModifier() throws {
-        let dice = try #require("1d20+4".parseDice)
+        let dice = try parser.parse("1d20+4")
         #expect(dice.description == "d20+4")  // leading 1 is elided
         let sample = rollSample(dice, in: 5...24)
         #expect((13.0...16.0).contains(sample.mean), "expected mean around 14.5, got \(sample.mean)")
@@ -46,7 +48,7 @@ struct DiceParserTests {
 
     @Test("Dice percent")
     func dicePercent() throws {
-        let dice = try #require("d%".parseDice)
+        let dice = try parser.parse("d%")
         #expect(dice.description == "d%")
         let sample = rollSample(dice, in: 1...100)
         #expect((45.0...56.0).contains(sample.mean), "expected mean around 50.5, got \(sample.mean)")
@@ -57,7 +59,7 @@ struct DiceParserTests {
 
     @Test("Multiply with X")
     func multiplyWithX() throws {
-        let dice = try #require("2d4x10".parseDice)
+        let dice = try parser.parse("2d4x10")
         #expect(dice.description == "2d4x10")
         let sample = rollSample(dice, in: 20...80)
         #expect((46.0...56.0).contains(sample.mean), "expected mean around 50.0, got \(sample.mean)")
@@ -67,7 +69,7 @@ struct DiceParserTests {
 
     @Test("Multiply with asterisk")
     func multiplyWithAsterisk() throws {
-        let dice = try #require("2d4*10".parseDice)
+        let dice = try parser.parse("2d4*10")
         #expect(dice.description == "2d4x10")  // * normalizes to x
         let sample = rollSample(dice, in: 20...80)
         #expect((46.0...56.0).contains(sample.mean), "expected mean around 50.0, got \(sample.mean)")
@@ -77,7 +79,7 @@ struct DiceParserTests {
 
     @Test("Divide")
     func divide() throws {
-        let dice = try #require("d100/10".parseDice)
+        let dice = try parser.parse("d100/10")
         #expect(dice.description == "d%/10")  // d100 normalizes to d%
         let sample = rollSample(dice, in: 0...10)
         #expect((4.0...5.0).contains(sample.mean), "expected mean around 4.5, got \(sample.mean)")
@@ -85,7 +87,7 @@ struct DiceParserTests {
 
     @Test("Dropping lowest")
     func droppingLowest() throws {
-        let dice = try #require("4d6-L".parseDice)
+        let dice = try parser.parse("4d6-L")
         #expect(dice.description == "4d6-L")
         let sample = rollSample(dice, in: 3...18)
         #expect((11.0...13.5).contains(sample.mean), "expected mean around 12.25, got \(sample.mean)")
@@ -96,7 +98,7 @@ struct DiceParserTests {
 
     @Test("Complex dice format string")
     func complexDiceFormatString() throws {
-        let dice = try #require("2d4+3d12-4".parseDice)
+        let dice = try parser.parse("2d4+3d12-4")
         #expect(dice.description == "2d4+3d12-4")
         let sample = rollSample(dice, in: 1...40)
         #expect((19.0...22.0).contains(sample.mean), "expected mean around 20.5, got \(sample.mean)")
@@ -107,7 +109,7 @@ struct DiceParserTests {
 
     @Test("Complex dice operator precedence")
     func complexDiceOperatorPrecedence() throws {
-        let dice = try #require("2d4+d12-2+5".parseDice)
+        let dice = try parser.parse("2d4+d12-2+5")
         #expect(dice.description == "2d4+d12-2+5")
         let sample = rollSample(dice, in: 6...23)
         #expect((13.0...16.0).contains(sample.mean), "expected mean around 14.5, got \(sample.mean)")
@@ -118,7 +120,7 @@ struct DiceParserTests {
 
     @Test("Complex dice with whitespace and dropping")
     func complexDiceExtraRollDroppingWithWhitespace() throws {
-        let dice = try #require("3d4- L + d12 -\n2 + 5".parseDice)
+        let dice = try parser.parse("3d4- L + d12 -\n2 + 5")
         #expect(dice.description == "3d4-L+d12-2+5")
         let sample = rollSample(dice, in: 6...23)
         #expect((13.0...16.0).contains(sample.mean), "expected mean around 14.5, got \(sample.mean)")
@@ -129,73 +131,73 @@ struct DiceParserTests {
 
     @Test("Constant modifiers")
     func constantModifiers() throws {
-        let dice = try #require("1+3".parseDice)
+        let dice = try parser.parse("1+3")
         #expect(dice.description == "1+3")
         #expect(dice.roll().description == "1 + 3")
     }
 
     @Test("Custom die sides")
     func customDieSidesString() throws {
-        let dice = try #require("d7".parseDice)
+        let dice = try parser.parse("d7")
         #expect(dice.description == "d7")
     }
 
     @Test("Fudge dice string")
     func fudgeDiceString() throws {
-        let dice = try #require("dF".parseDice)
+        let dice = try parser.parse("dF")
         #expect(dice.description == "dF")
     }
 
     @Test("Fudge dice times string")
     func fudgeDiceTimesString() throws {
-        let dice = try #require("4dF".parseDice)
+        let dice = try parser.parse("4dF")
         #expect(dice.description == "4dF")
         rollSample(dice, in: -4...4)
     }
 
     @Test("Fudge dice with modifier string")
     func fudgeDiceWithModifierString() throws {
-        let dice = try #require("dF+2".parseDice)
+        let dice = try parser.parse("dF+2")
         #expect(dice.description == "dF+2")
     }
 
     @Test("Dropping lowest two")
     func droppingLowestTwo() throws {
-        let dice = try #require("4d6-L2".parseDice)
+        let dice = try parser.parse("4d6-L2")
         #expect(dice.description == "4d6-L2")
         rollSample(dice, in: 2...12)
     }
 
     @Test("Dropping highest two")
     func droppingHighestTwo() throws {
-        let dice = try #require("5d6-H2".parseDice)
+        let dice = try parser.parse("5d6-H2")
         #expect(dice.description == "5d6-H2")
         rollSample(dice, in: 3...18)
     }
 
     @Test("Rerolling dice string")
     func rerollingDiceString() throws {
-        let dice = try #require("2d6r1".parseDice)
+        let dice = try parser.parse("2d6r1")
         #expect(dice.description == "2d6r1")
         rollSample(dice, in: 2...12)
     }
 
     @Test("Rerolling dice with dropping")
     func rerollingDiceWithDropping() throws {
-        let dice = try #require("4d6r1-L".parseDice)
+        let dice = try parser.parse("4d6r1-L")
         #expect(dice.description == "4d6r1-L")
         rollSample(dice, in: 3...18)
     }
 
     @Test("Rerolling and exploding dice string")
     func rerollingAndExplodingDiceString() throws {
-        let dice = try #require("2d6!r1".parseDice)
+        let dice = try parser.parse("2d6!r1")
         #expect(dice.description == "2d6!r1")
     }
 
     @Test("Exploding dice string")
     func explodingDiceString() throws {
-        let dice = try #require("d6!".parseDice)
+        let dice = try parser.parse("d6!")
         #expect(dice.description == "d6!")
         for _ in 0..<sampleSize {
             #expect(dice.roll().result >= 1)
@@ -204,7 +206,7 @@ struct DiceParserTests {
 
     @Test("Exploding dice times string")
     func explodingDiceTimesString() throws {
-        let dice = try #require("2d6!".parseDice)
+        let dice = try parser.parse("2d6!")
         #expect(dice.description == "2d6!")
         for _ in 0..<sampleSize {
             #expect(dice.roll().result >= 2)
@@ -213,7 +215,7 @@ struct DiceParserTests {
 
     @Test("Exploding dice with dropping")
     func explodingDiceWithDropping() throws {
-        let dice = try #require("4d6!-L".parseDice)
+        let dice = try parser.parse("4d6!-L")
         #expect(dice.description == "4d6!-L")
         for _ in 0..<sampleSize {
             #expect(dice.roll().result >= 3)
@@ -222,21 +224,21 @@ struct DiceParserTests {
 
     @Test("Keep highest notation")
     func keepHighestString() throws {
-        let dice = try #require("4d6kh3".parseDice)
+        let dice = try parser.parse("4d6kh3")
         #expect(dice.description == "4d6kh3")
         rollSample(dice, in: 3...18)
     }
 
     @Test("Keep lowest notation (disadvantage)")
     func keepLowestString() throws {
-        let dice = try #require("2d20kl1".parseDice)
+        let dice = try parser.parse("2d20kl1")
         #expect(dice.description == "2d20kl1")
         rollSample(dice, in: 1...20)
     }
 
     @Test("Keep highest advantage")
     func keepHighestAdvantage() throws {
-        let dice = try #require("2d20kh1".parseDice)
+        let dice = try parser.parse("2d20kh1")
         #expect(dice.description == "2d20kh1")
     }
 
@@ -254,9 +256,34 @@ struct DiceParserTests {
         ("2d4k", "keep missing method character"),
         ("!", "bare exploding without dice"),
         ("2d6r", "reroll without threshold"),
+        ("d0", "invalid die sides"),
+        ("", "empty expression"),
+        ("F", "fudge without preceding die"),
+        ("4dFr1", "reroll on fudge dice"),
+        ("4dFkh1", "keep on fudge dice"),
+        ("d4dF", "consecutive die and fudge"),
     ])
     func invalidDiceFormatStrings(badFormatString: String, reason: String) {
-        let roll = badFormatString.parseDice
-        #expect(roll == nil, "'\(badFormatString)' \(reason)")
+        #expect(throws: DiceParseError.self, "'\(badFormatString)' \(reason)") {
+            _ = try parser.parse(badFormatString)
+        }
+    }
+
+    @Test("Error descriptions are non-nil")
+    func errorDescriptions() {
+        let errors: [DiceParseError] = [
+            .invalidCharacter("?"),
+            .invalidDieSides(0),
+            .missingMinus,
+            .missingSimpleDice,
+            .missingDieSides,
+            .missingExpression,
+            .consecutiveNumbers,
+            .consecutiveMathOperators,
+            .consecutiveDiceExpressions,
+        ]
+        for error in errors {
+            #expect(error.errorDescription != nil, "errorDescription should not be nil for \(error)")
+        }
     }
 }

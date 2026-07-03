@@ -5,7 +5,7 @@
 
 /// A Fudge/FATE die expression, producing outcomes of -1, 0, or +1 per die rolled.
 /// Commonly used in FATE and Fudge role-playing games.
-public struct FudgeDice: Rollable {
+public struct FudgeDice: Rollable, Equatable {
     public let times: Int
 
     public init(times: Int = 1) {

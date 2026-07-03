@@ -304,4 +304,36 @@ struct DiceTests {
         #expect(dice.description == "2d8-dF")
         rollSample(dice, in: 1...17)
     }
+
+    @Test("CompoundDice equality")
+    func compoundDiceEquality() {
+        let a = 2 * Dice.d8 + 4
+        let b = 2 * Dice.d8 + 4
+        let c = 2 * Dice.d8 + 5
+        #expect(a == b)
+        #expect(a != c)
+    }
+
+    @Test("Generic Rollable arithmetic operators")
+    func genericRollableOperators() {
+        // Generic (some Rollable, some Rollable) overloads fire when both sides are CompoundDice.
+        let lhs = 2 * Dice.d8 + 4  // CompoundDice
+        let rhs = Dice.d6 - 1      // CompoundDice
+        let sum = lhs + rhs
+        #expect(sum.description == "2d8+4+d6-1")
+        let diff = lhs - rhs
+        #expect(diff.description == "2d8+4-d6-1")
+        let product = lhs * rhs
+        #expect(product.description == "2d8+4xd6-1")
+        let quotient = lhs / rhs
+        #expect(quotient.description == "2d8+4/d6-1")
+    }
+
+    @Test("Zero-times dice roll produces zero result")
+    func zeroDiceRoll() {
+        let dice = Dice(sides: 6, times: 0)
+        let roll = dice.roll()
+        #expect(roll.result == 0)
+        #expect(roll.description == "0")
+    }
 }

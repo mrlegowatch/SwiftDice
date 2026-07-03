@@ -8,7 +8,7 @@
 
 
 /// A dice expression with a given number of sides, rolled one or more times.
-public struct Dice: Rollable {
+public struct Dice: Rollable, Equatable {
     public let sides: Int
     public let times: Int
     public let isExploding: Bool

@@ -12,7 +12,7 @@
 /// The two primary use cases for this type are:
 /// - combining two rolls, e.g., "`2d4+d6`",
 /// - using a modifier, e.g., "`d12+2`".
-public struct CompoundDice: Rollable {
+public struct CompoundDice: Rollable, Equatable {
     public let lhs: Rollable
     public let rhs: Rollable
     public let mathOperator: MathOperator
@@ -52,6 +52,10 @@ public struct CompoundDice: Rollable {
 
     /// Returns a description of the left and right hand sides with the math operator.
     public var description: String { "\(lhs)\(mathOperator.rawValue)\(rhs)" }
+    
+    public static func ==(lhs: CompoundDice, rhs: CompoundDice) -> Bool {
+        lhs.description == rhs.description
+    }
 }
 
 // MARK: - Addition and Subtraction

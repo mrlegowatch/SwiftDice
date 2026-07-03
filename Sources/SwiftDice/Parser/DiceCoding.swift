@@ -1,5 +1,5 @@
 //
-//  DiceDecoding.swift
+//  DiceCoding.swift
 //  SwiftDice
 //
 //  Created by Brian Arnold on 11/23/16.
@@ -7,6 +7,23 @@
 //
 
 import Foundation
+
+// MARK: - Encoding
+
+public extension KeyedEncodingContainer {
+
+    /// Encodes a `Rollable` as its dice notation string.
+    mutating func encode(_ value: some Rollable, forKey key: K) throws {
+        try encode(value.description, forKey: key)
+    }
+
+    /// Encodes a `Rollable` as its dice notation string if non-nil; otherwise omits the key.
+    mutating func encodeIfPresent(_ value: (any Rollable)?, forKey key: K) throws {
+        if let value { try encode(value.description, forKey: key) }
+    }
+}
+
+// MARK: - Decoding
 
 public extension KeyedDecodingContainer {
 
@@ -23,7 +40,7 @@ public extension KeyedDecodingContainer {
         }
 
         if let string = try? decode(String.self, forKey: key),
-           let dice = string.parseDice {
+           let dice = try? DiceParser().parse(string) {
             return dice
         }
 
@@ -49,7 +66,7 @@ public extension KeyedDecodingContainer {
         }
 
         if let string = try? decode(String.self, forKey: key) {
-            return string.parseDice
+            return try? DiceParser().parse(string)
         }
 
         return nil
