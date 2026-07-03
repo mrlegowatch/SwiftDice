@@ -76,17 +76,6 @@ public struct Dice: Rollable {
         return "\(timesString)d\(sidesString)\(explodingString)\(rerollString)"
     }
 
-    /// Returns the last roll as a sequence of added numbers in parenthesis.
-    internal func rollDescription(_ lastRoll: [Int]) -> String {
-        guard !lastRoll.isEmpty else { return "0" }
-
-        guard lastRoll.count > 1 else {
-            return "\(lastRoll[0])"
-        }
-
-        let rollsString = lastRoll.map(String.init).joined(separator: " + ")
-        return "(\(rollsString))"
-    }
 }
 
 // MARK: - Multiplication Operator

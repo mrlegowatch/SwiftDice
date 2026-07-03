@@ -18,13 +18,6 @@ public struct FudgeDice: Rollable {
         return DiceRoll(result, rollDescription(rolls))
     }
 
-    private func rollDescription(_ rolls: [Int]) -> String {
-        guard !rolls.isEmpty else { return "0" }
-        guard rolls.count > 1 else { return "\(rolls[0])" }
-        let rollsString = rolls.map(String.init).joined(separator: " + ")
-        return "(\(rollsString))"
-    }
-
     public var description: String {
         times == 1 ? "dF" : "\(times)dF"
     }
