@@ -1,5 +1,5 @@
 //
-//  DiceEncodingTests.swift
+//  DiceCodingTests.swift
 //  SwiftDice
 //
 //  Created by Brian Arnold on 10/29/25.
@@ -10,15 +10,24 @@ import Testing
 import SwiftDice
 import Foundation
 
-@Suite("Dice Encoding Tests")
-struct DiceEncodingTests {
+@Suite("Dice encoding and decoding Tests")
+struct DiceCodingTests {
 
     private struct EncodableDiceContainer: Encodable {
         let dice: Rollable
         enum CodingKeys: String, CodingKey { case dice }
         func encode(to encoder: Encoder) throws {
             var container = encoder.container(keyedBy: CodingKeys.self)
-            try container.encode("\(dice)", forKey: .dice)
+            try container.encode(dice, forKey: .dice)
+        }
+    }
+
+    private struct EncodableOptionalDiceContainer: Encodable {
+        let dice: Rollable?
+        enum CodingKeys: String, CodingKey { case dice }
+        func encode(to encoder: Encoder) throws {
+            var container = encoder.container(keyedBy: CodingKeys.self)
+            try container.encodeIfPresent(dice, forKey: .dice)
         }
     }
 
@@ -45,6 +54,20 @@ struct DiceEncodingTests {
         let encoded = try JSONEncoder().encode(EncodableDiceContainer(dice: 3 * Dice.d8 - 3))
         let deserialized = try JSONSerialization.jsonObject(with: encoded) as? [String: String]
         #expect(deserialized?["dice"] == "3d8-3")
+    }
+
+    @Test("Encoding optional dice - present")
+    func encodingOptionalDicePresent() throws {
+        let encoded = try JSONEncoder().encode(EncodableOptionalDiceContainer(dice: Dice.d6))
+        let deserialized = try JSONSerialization.jsonObject(with: encoded) as? [String: String]
+        #expect(deserialized?["dice"] == "d6")
+    }
+
+    @Test("Encoding optional dice - nil omits key")
+    func encodingOptionalDiceNil() throws {
+        let encoded = try JSONEncoder().encode(EncodableOptionalDiceContainer(dice: nil))
+        let deserialized = try JSONSerialization.jsonObject(with: encoded) as? [String: String]
+        #expect(deserialized?["dice"] == nil)
     }
 
     @Test("Decoding dice - typical expression")
