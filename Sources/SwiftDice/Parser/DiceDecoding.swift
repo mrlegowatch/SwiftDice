@@ -23,7 +23,7 @@ public extension KeyedDecodingContainer {
         }
 
         if let string = try? decode(String.self, forKey: key),
-           let dice = string.parseDice {
+           let dice = try? DiceParser().parse(string) {
             return dice
         }
 
@@ -49,7 +49,7 @@ public extension KeyedDecodingContainer {
         }
 
         if let string = try? decode(String.self, forKey: key) {
-            return string.parseDice
+            return try? DiceParser().parse(string)
         }
 
         return nil

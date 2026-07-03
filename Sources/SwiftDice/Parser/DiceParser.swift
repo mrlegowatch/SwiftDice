@@ -6,6 +6,8 @@
 //  Copyright © 2016-2017 Brian Arnold. All rights reserved.
 //
 
+import Foundation
+
 // MARK: - Parser State
 
 /// The internal state of the parser when it processes tokens.
@@ -167,64 +169,22 @@ private struct DiceParserState {
     }
 }
 
-// MARK: - Parser
+// MARK: - Public Parser
 
-private func isNextTokenDropping(_ tokens: [Token], after index: Int) -> Bool {
-    guard index + 1 < tokens.count else { return false }
-    return tokens[index + 1].isDropping
-}
-
-/// Converts an array of tokens into a `Rollable` object.
+/// Converts dice notation strings into `Rollable` instances.
 ///
-/// - Parameter tokens: The tokens to parse
-/// - Returns: A `Rollable` instance representing the parsed expression, or `nil` if empty
-/// - Throws: `DiceParseError` if the token sequence is invalid
-func parse(_ tokens: [Token]) throws -> Rollable? {
-    var parsedDice: Rollable?
-    var state = DiceParserState()
+/// Create an instance and call `parse(_:)` to convert a string expression.
+/// Throws `DiceParseError` on failure, allowing callers to surface specific error information.
+///
+/// ```swift
+/// let parser = DiceParser()
+/// let roll = try parser.parse("4d6-L")
+/// ```
+public struct DiceParser {
 
-    for (index, token) in tokens.enumerated() {
-        switch token {
-        case .number(let value):
-            try state.parse(number: value)
+    public init() { }
 
-        case .die:
-            try state.parseDie()
-
-        case .fudge:
-            try state.parseFudge()
-
-        case .drop(let drop, let count):
-            try state.parse(drop: drop, count: count)
-
-        case .keep(let keep, let count):
-            try state.parse(keep: keep, count: count)
-
-        case .exploding:
-            try state.parseExploding()
-
-        case .reroll(let threshold):
-            try state.parseReroll(threshold: threshold)
-
-        case .mathOperator(let math):
-            if !isNextTokenDropping(tokens, after: index) {
-                parsedDice = state.combine(parsedDice)
-            }
-            try state.parse(math: math)
-        }
-    }
-
-    parsedDice = state.combine(parsedDice)
-    try state.validate()
-
-    return parsedDice
-}
-
-// MARK: - String Extension
-
-public extension String {
-
-    /// Creates a `Rollable` instance from a dice notation string.
+    /// Parses a dice notation string into a `Rollable`.
     ///
     /// Supported format: `[<times>]d<sides>[!][r<n>][<mathOperator><modifier>|-<dropping>|kh<n>|kl<n>]*`
     ///
@@ -243,14 +203,97 @@ public extension String {
     ///
     /// Supported dice sides: any positive integer; d100 may be written as d%
     ///
-    /// - Returns: A `Rollable` instance, or `nil` if the string cannot be parsed
-    var parseDice: Rollable? {
-        do {
-            let tokens = try tokenize(self)
-            return try parse(tokens)
-        } catch {
-            print("Error parsing dice: \(error.localizedDescription)")
-            return nil
+    /// - Parameter expression: The dice notation string to parse
+    /// - Returns: A `Rollable` instance representing the expression
+    /// - Throws: `DiceParseError` if the expression is invalid or empty
+    public func parse(_ expression: String) throws -> Rollable {
+        let tokens = try tokenize(expression)
+        guard let result = try evaluate(tokens) else {
+            throw DiceParseError.missingExpression
         }
+        return result
+    }
+
+    private func evaluate(_ tokens: [Token]) throws -> Rollable? {
+        var parsedDice: Rollable?
+        var state = DiceParserState()
+
+        for (index, token) in tokens.enumerated() {
+            switch token {
+            case .number(let value):
+                try state.parse(number: value)
+
+            case .die:
+                try state.parseDie()
+
+            case .fudge:
+                try state.parseFudge()
+
+            case .drop(let drop, let count):
+                try state.parse(drop: drop, count: count)
+
+            case .keep(let keep, let count):
+                try state.parse(keep: keep, count: count)
+
+            case .exploding:
+                try state.parseExploding()
+
+            case .reroll(let threshold):
+                try state.parseReroll(threshold: threshold)
+
+            case .mathOperator(let math):
+                if !isNextTokenDropping(tokens, after: index) {
+                    parsedDice = state.combine(parsedDice)
+                }
+                try state.parse(math: math)
+            }
+        }
+
+        parsedDice = state.combine(parsedDice)
+        try state.validate()
+
+        return parsedDice
+    }
+
+    private func isNextTokenDropping(_ tokens: [Token], after index: Int) -> Bool {
+        guard index + 1 < tokens.count else { return false }
+        return tokens[index + 1].isDropping
+    }
+
+    private func tokenize(_ string: String) throws -> [Token] {
+        var tokens: [Token] = []
+        var numberBuffer = NumberBuffer()
+        let scalars = string.unicodeScalars
+        var index = scalars.startIndex
+
+        while index < scalars.endIndex {
+            let scalar = scalars[index]
+            index = scalars.index(after: index)
+
+            if CharacterSet.decimalDigits.contains(scalar) {
+                numberBuffer.append(scalar)
+            } else {
+                if let value = numberBuffer.flush() { tokens.append(.number(value)) }
+                guard !CharacterSet.whitespacesAndNewlines.contains(scalar) else { continue }
+
+                if Token.keepCharacters.contains(scalar) {
+                    tokens.append(try Token.keep(leadingScalar: scalar, in: scalars, at: &index))
+                    continue
+                }
+
+                if Token.rerollCharacters.contains(scalar) {
+                    tokens.append(try Token.reroll(leadingScalar: scalar, in: scalars, at: &index))
+                    continue
+                }
+
+                guard let token = Token(from: scalar) else {
+                    throw DiceParseError.invalidCharacter(String(scalar))
+                }
+                tokens.append(token)
+            }
+        }
+
+        if let value = numberBuffer.flush() { tokens.append(.number(value)) }
+        return Token.mergingSelectingCounts(tokens)
     }
 }

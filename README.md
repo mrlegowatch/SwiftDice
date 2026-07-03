@@ -69,19 +69,20 @@ extension Dice {
 let tableRoll = (2 * .d30).dropping(.lowest)
 ```
 
-The parser also accepts any positive integer: `"4d30-L".parseDice` produces a `SelectingDice` over four 30-sided dice.
+The parser also accepts any positive integer: `DiceParser().parse("4d30-L")` produces a `SelectingDice` over four 30-sided dice.
 
 ## Dice Notation Parser
 
-The `String.parseDice` property converts a dice notation string into a `Rollable` instance. It returns `nil` if the expression cannot be parsed.
+`DiceParser` converts a dice notation string into a `Rollable` instance. It throws `DiceParseError` if the expression cannot be parsed.
 
 ```swift
-let roll = "4d6-L".parseDice       // SelectingDice — four d6, drop lowest
-let roll = "4d6kh3".parseDice      // SelectingDice — four d6, keep three highest
-let roll = "2d20kh1".parseDice     // SelectingDice — two d20, keep highest (advantage)
-let roll = "2d8+4".parseDice       // CompoundDice — two d8 plus 4
-let roll = "d20".parseDice         // Dice — one d20
-let roll = "5d4x10".parseDice      // CompoundDice — five d4 multiplied by 10
+let parser = DiceParser()
+let roll = try parser.parse("4d6-L")      // SelectingDice — four d6, drop lowest
+let roll = try parser.parse("4d6kh3")     // SelectingDice — four d6, keep three highest
+let roll = try parser.parse("2d20kh1")    // SelectingDice — two d20, keep highest (advantage)
+let roll = try parser.parse("2d8+4")      // CompoundDice — two d8 plus 4
+let roll = try parser.parse("d20")        // Dice — one d20
+let roll = try parser.parse("5d4x10")     // CompoundDice — five d4 multiplied by 10
 ```
 
 Supported operators: `+`, `-`, `x`, `*`, `/`
@@ -126,7 +127,7 @@ print(damage)              // "2d8+4"
 print(damage.roll().result) // e.g. 13
 
 // Parse from a string
-if let startingGold = "5d4x10".parseDice {
+if let startingGold = try? DiceParser().parse("5d4x10") {
     print(startingGold.roll().result)  // e.g. 80
 }
 ```
