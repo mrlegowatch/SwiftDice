@@ -21,12 +21,6 @@ public struct DroppingDice: Rollable {
     /// Whether to drop the lowest or highest roll.
     public let drop: Drop
 
-    /// Creates a Dice for the specified die, times to roll,
-    /// and whether to drop the high or low result.
-    public init(_ die: Die, times: Int, drop: Drop) {
-        self.init(Dice(die, times: times), drop: drop)
-    }
-
     /// Wraps a Dice with whether to drop the high or low result.
     public init(_ dice: Dice, drop: Drop) {
         self.dice = dice

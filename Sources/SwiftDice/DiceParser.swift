@@ -48,13 +48,13 @@ enum DiceParseError: Error, LocalizedError, Sendable {
 
 // MARK: - Token
 
-
 /// Types of tokens supported by this parser.
 enum Token {
     case number(Int)
     case mathOperator(String)
     case die
     case drop(String)
+    case fudge
 
     // MARK: Character Sets
 
@@ -64,6 +64,7 @@ enum Token {
         charactersIn: DroppingDice.Drop.allCases.map(\.rawValue).joined()
     )
     private static let percentCharacters = CharacterSet(charactersIn: "%")
+    private static let fudgeCharacters = CharacterSet(charactersIn: "fF")
 
     // MARK: Initialization
 
@@ -77,6 +78,8 @@ enum Token {
             self = .drop(String(scalar))
         case _ where Self.percentCharacters.contains(scalar):
             self = .number(100)
+        case _ where Self.fudgeCharacters.contains(scalar):
+            self = .fudge
         default:
             return nil
         }
@@ -113,7 +116,7 @@ private struct NumberBuffer {
 
 /// Converts a dice-formatted string into a sequence of tokens.
 ///
-/// - Parameter string: The string to tokenize (e.g., "2d6+3")
+/// - Parameter string: The string to tokenize (e.g., "2d6+3", "4dF")
 /// - Returns: An array of tokens representing the parsed string
 /// - Throws: `DiceParseError.invalidCharacter` if an unknown character is encountered
 func tokenize(_ string: String) throws -> [Token] {
@@ -122,18 +125,14 @@ func tokenize(_ string: String) throws -> [Token] {
 
     for scalar in string.unicodeScalars {
         if CharacterSet.decimalDigits.contains(scalar) {
-            // Numbers consume multiple characters
             numberBuffer.append(scalar)
         } else {
-            // Flush any accumulated number before processing the next character
             if let value = numberBuffer.flush() {
                 tokens.append(.number(value))
             }
 
-            // Skip whitespace
             guard !CharacterSet.whitespacesAndNewlines.contains(scalar) else { continue }
 
-            // Parse token or throw error for invalid characters
             guard let token = Token(from: scalar) else {
                 throw DiceParseError.invalidCharacter(String(scalar))
             }
@@ -142,7 +141,6 @@ func tokenize(_ string: String) throws -> [Token] {
         }
     }
 
-    // Flush any remaining number
     if let value = numberBuffer.flush() {
         tokens.append(.number(value))
     }
@@ -161,21 +159,20 @@ private struct DiceParserState {
 
     // MARK: Parsing Methods
 
-    /// Parses a number and stores it either as dice sides or as `lastNumber`.
+    /// Parses a number, storing it as die sides or as `lastNumber`.
     ///
-    /// - Parameter number: The number value to parse
-    /// - Throws: `DiceParseError` if consecutive numbers or dice expressions are encountered
+    /// - Throws: `DiceParseError` if consecutive numbers or invalid sides are encountered
     mutating func parse(number: Int) throws {
         if isParsingDie {
             guard lastDice == nil else {
                 throw DiceParseError.consecutiveDiceExpressions
             }
-            guard let die = Die(rawValue: number) else {
+            guard number > 0 else {
                 throw DiceParseError.invalidDieSides(number)
             }
 
             let times = lastNumber ?? 1
-            lastDice = Dice(die, times: times)
+            lastDice = Dice(sides: number, times: times)
             isParsingDie = false
             lastNumber = nil
         } else {
@@ -187,7 +184,6 @@ private struct DiceParserState {
     }
 
     /// Initiates parsing a die expression.
-    /// The die is completed when parsing dice sides as an integer.
     ///
     /// - Throws: `DiceParseError.consecutiveDiceExpressions` if already parsing a die
     mutating func parseDie() throws {
@@ -197,10 +193,24 @@ private struct DiceParserState {
         isParsingDie = true
     }
 
-    /// Parses a dropping dice modifier supported by `DroppingDice`.
-    /// Must be preceded by a `Dice` expression and a '-' math operator.
+    /// Parses a Fudge die token (F/f), which must immediately follow a die token.
     ///
-    /// - Parameter drop: The drop modifier string ("L" or "H")
+    /// - Throws: `DiceParseError` if not currently parsing a die, or consecutive expressions
+    mutating func parseFudge() throws {
+        guard isParsingDie else {
+            throw DiceParseError.invalidCharacter("F")
+        }
+        guard lastDice == nil else {
+            throw DiceParseError.consecutiveDiceExpressions
+        }
+        let times = lastNumber ?? 1
+        lastDice = FudgeDice(times: times)
+        isParsingDie = false
+        lastNumber = nil
+    }
+
+    /// Parses a dropping dice modifier.
+    ///
     /// - Throws: `DiceParseError` if preconditions are not met
     mutating func parse(drop: String) throws {
         guard let dice = lastDice as? Dice else {
@@ -217,9 +227,8 @@ private struct DiceParserState {
         lastMathOperator = nil
     }
 
-    /// Parses a math operator supported by `CompoundDice`.
+    /// Parses a math operator.
     ///
-    /// - Parameter math: The math operator string
     /// - Throws: `DiceParseError.consecutiveMathOperators` if another operator is pending
     mutating func parse(math: String) throws {
         guard lastMathOperator == nil else {
@@ -232,10 +241,7 @@ private struct DiceParserState {
         lastMathOperator = op
     }
 
-    /// Returns a `Rollable` from either the last number (`DiceModifier`) or `lastDice`,
-    /// and resets their state.
-    ///
-    /// - Returns: A `Rollable` instance or `nil` if no pending dice exist
+    /// Returns a `Rollable` from either the last number or `lastDice`, and resets their state.
     mutating func flush() -> Rollable? {
         if let number = lastNumber {
             lastNumber = nil
@@ -248,19 +254,12 @@ private struct DiceParserState {
     }
 
     /// Returns combined dice from the current parsed dice and the current parse state.
-    ///
-    /// If there is no current parsed dice, the current parse state is returned.
-    /// If there is no math operator or no right-hand side, the left-hand side is returned.
-    ///
-    /// - Parameter lhsDice: The left-hand side to combine with current state
-    /// - Returns: The combined dice or the original dice if no combination is possible
     mutating func combine(_ lhsDice: Rollable?) -> Rollable? {
         guard let lhsDice else { return flush() }
         guard let mathOperator = lastMathOperator, let rhsDice = flush() else {
             return lhsDice
         }
 
-        // Combine left-hand side, math operator, and right-hand side
         lastMathOperator = nil
         return CompoundDice(lhs: lhsDice, rhs: rhsDice, mathOperator: mathOperator)
     }
@@ -302,11 +301,13 @@ func parse(_ tokens: [Token]) throws -> Rollable? {
         case .die:
             try state.parseDie()
 
+        case .fudge:
+            try state.parseFudge()
+
         case .drop(let drop):
             try state.parse(drop: drop)
 
         case .mathOperator(let math):
-            // Only combine if the next token isn't a drop modifier
             if !isNextTokenDropping(tokens, after: index) {
                 parsedDice = state.combine(parsedDice)
             }
@@ -334,8 +335,9 @@ public extension String {
     /// - `"4d6-L"` → Four 6-sided dice, drop lowest
     /// - `"1"` → Constant modifier of 1
     /// - `"2d4+3d12-4"` → Compound expression
+    /// - `"4dF"` → Four Fudge dice
     ///
-    /// Supported dice sides: 4, 6, 8, 10, 12, 20, and % (100)
+    /// Supported dice sides: any positive integer; d100 may be written as d%
     ///
     /// - Returns: A `Rollable` instance, or `nil` if the string cannot be parsed
     var parseDice: Rollable? {
@@ -361,18 +363,15 @@ public extension KeyedDecodingContainer {
     /// - Returns: A decoded `Rollable` instance
     /// - Throws: `DecodingError.dataCorrupted` if the value cannot be decoded as dice
     func decode(_ type: Rollable.Protocol, forKey key: K) throws -> Rollable {
-        // Try decoding as an integer first (for constant modifiers)
         if let number = try? decode(Int.self, forKey: key) {
             return DiceModifier(number)
         }
 
-        // Try decoding as a string and parsing as dice notation
         if let string = try? decode(String.self, forKey: key),
            let dice = string.parseDice {
             return dice
         }
 
-        // Throw if neither approach succeeded
         let context = DecodingError.Context(
             codingPath: codingPath,
             debugDescription: "Could not decode Rollable from string or number"
@@ -388,15 +387,12 @@ public extension KeyedDecodingContainer {
     /// - Returns: A decoded `Rollable` instance, or `nil` if the key is not present
     /// - Throws: `DecodingError.dataCorrupted` if the value is present but cannot be decoded
     func decodeIfPresent(_ type: Rollable.Protocol, forKey key: K) throws -> Rollable? {
-        // Return nil if the key doesn't exist
         guard contains(key) else { return nil }
 
-        // Try decoding as an integer first
         if let number = try? decode(Int.self, forKey: key) {
             return DiceModifier(number)
         }
 
-        // Try decoding as a string and parsing as dice notation
         if let string = try? decode(String.self, forKey: key) {
             return string.parseDice
         }

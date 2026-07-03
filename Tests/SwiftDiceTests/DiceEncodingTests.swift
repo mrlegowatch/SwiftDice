@@ -28,7 +28,7 @@ struct DiceEncodingTests {
             }
         }
 
-        let diceContainer = DiceContainer(dice: CompoundDice(.d8, times: 3, modifier: 3, mathOperator: .subtract))
+        let diceContainer = DiceContainer(dice: 3 * Dice.d8 - 3)
         let encoder = JSONEncoder()
         let encoded = try encoder.encode(diceContainer)
         let deserialized = try JSONSerialization.jsonObject(with: encoded, options: []) as? [String: String]

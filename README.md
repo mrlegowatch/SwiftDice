@@ -16,30 +16,52 @@ All types conform to `Rollable`, which requires a `roll() -> DiceRoll` method, a
 
 | Type | Description | Example |
 |---|---|---|
-| `Dice` | One or more of the same die | `Dice.d8`, `2 * Dice.d8` |
-| `DroppingDice` | Rolls multiple dice and drops the highest or lowest | `(4 * Dice.d6).dropping(.lowest)` |
-| `CompoundDice` | Combines two `Rollable` values with a math operator | `2 * Dice.d8 + 4`, `2 * Dice.d8 + .d4` |
+| `Dice` | One or more of the same die | `Dice.d8`, `2 * .d8` |
+| `DroppingDice` | Rolls multiple dice and drops the highest or lowest | `(4 * .d6).dropping(.lowest)` |
+| `CompoundDice` | Combines two `Rollable` values with a math operator | `2 * .d8 + 4`, `2 * .d8 + .d4` |
 | `DiceModifier` | A constant value used as a `Rollable` | `DiceModifier(3)` → `"3"` |
 
-Supported die sizes: **d4, d6, d8, d10, d12, d20, d100** (also written as `d%`).
+Supported die sizes: **d4, d6, d8, d10, d12, d20, d100** (also written as `d%`) — the standard polyhedral set. Any positive integer is valid when constructing `Dice` directly or parsing from a string.
 
 ## Expressions
 
-`Dice` provides static shorthands for each die size, so die types read naturally without a `Die.` prefix. The `*`, `+`, and `-` operators and `.dropping(_:)` method compose these into larger expressions:
+`Dice` provides static shorthands for the standard polyhedral set, so die types read naturally. The `*`, `+`, and `-` operators and `.dropping(_:)` method compose these into larger expressions:
 
 ```swift
 Dice.d20                              // d20
-2 * Dice.d8                           // 2d8
-2 * Dice.d8 + 4                       // 2d8+4
-2 * Dice.d8 + .d4                     // 2d8+d4
-(4 * Dice.d6).dropping(.lowest)       // 4d6-L
+2 * .d8                               // 2d8
+2 * .d8 + 4                           // 2d8+4
+2 * .d8 + .d4                         // 2d8+d4
+(4 * .d6).dropping(.lowest)           // 4d6-L
 ```
 
-In a typed context, `.d6`, `.d8`, etc. are available without the `Dice.` prefix:
+Wherever `*` appears, the `Dice.` prefix can be omitted — the operator's `rhs: Dice` signature provides the type context. For example:
 
 ```swift
-let damage: some Rollable = 2 * .d6 + 3
+let damage = 2 * .d6 + 3
+let fateBonus = 2 * .d8 + .dF
 ```
+
+## Custom Dice
+
+For dice outside the standard set, construct `Dice` directly or add named shorthands in your own module:
+
+```swift
+// Direct construction — works with all operators:
+let spellEffect = Dice(sides: 3)          // e.g. Tunnels & Trolls spell dice
+let dungeonTable = 5 * Dice(sides: 30)   // e.g. OSR d30 Companion random tables
+
+// Or add named shorthands once:
+extension Dice {
+    static let d3  = Dice(sides: 3)
+    static let d30 = Dice(sides: 30)
+}
+
+// Then use them like any standard die:
+let tableRoll = (2 * .d30).dropping(.lowest)
+```
+
+The parser also accepts any positive integer: `"4d30-L".parseDice` produces a `DroppingDice` over four 30-sided dice.
 
 ## Dice Notation Parser
 
@@ -74,13 +96,13 @@ let hitDice = try container.decode(Rollable.self, forKey: .hitDice)
 import SwiftDice
 
 // Roll ability scores: 4d6, drop lowest
-let abilityRoll = (4 * Dice.d6).dropping(.lowest)
+let abilityRoll = (4 * .d6).dropping(.lowest)
 let result = abilityRoll.roll()
 print(result.result)       // e.g. 14
 print(result.description)  // e.g. "(3 + 6 + 4 + 5) - 3"
 
 // Weapon damage: 2d8+4
-let damage = 2 * Dice.d8 + 4
+let damage = 2 * .d8 + 4
 print(damage)              // "2d8+4"
 print(damage.roll().result) // e.g. 13
 

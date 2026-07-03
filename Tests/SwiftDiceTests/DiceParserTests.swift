@@ -324,8 +324,42 @@ struct DiceParserTests {
         }
     }
 
+    @Test("Custom die sides")
+    func customDieSidesString() {
+        let dice = "d7".parseDice
+        #expect(dice != nil, "d7 should parse as a valid 7-sided die")
+        if let dice = dice {
+            #expect(dice.description == "d7")
+        }
+    }
+
+    @Test("Fudge dice string")
+    func fudgeDiceString() {
+        let dF = "dF".parseDice
+        #expect(dF != nil, "dF should parse")
+        #expect(dF?.description == "dF")
+    }
+
+    @Test("Fudge dice times string")
+    func fudgeDiceTimesString() {
+        let fourDF = "4dF".parseDice
+        #expect(fourDF != nil, "4dF should parse")
+        #expect(fourDF?.description == "4dF")
+        if let dice = fourDF {
+            for _ in 0..<sampleSize {
+                #expect((-4...4).contains(dice.roll().result))
+            }
+        }
+    }
+
+    @Test("Fudge dice with modifier string")
+    func fudgeDiceWithModifierString() {
+        let dFplus2 = "dF+2".parseDice
+        #expect(dFplus2 != nil, "dF+2 should parse")
+        #expect(dFplus2?.description == "dF+2")
+    }
+
     @Test("Invalid dice format strings", arguments: [
-        ("d7", "unsupported dice number"),
         ("dhello", "unsupported dice number"),
         ("2+elephants", "unsupported character tokens"),
         ("3d", "missing dice sides"),

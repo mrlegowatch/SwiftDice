@@ -7,70 +7,73 @@
 //
 
 
-/// A dice expression with a single die type rolled one or more times.
+/// A dice expression with a given number of sides, rolled one or more times.
 public struct Dice: Rollable {
-    public let die: Die
+    public let sides: Int
     public let times: Int
 
-    /// Creates a Dice for the specified die. Optionally specify times to roll.
+    /// Creates a Dice with the specified number of sides. Optionally specify times to roll.
     /// Defaults to rolling one time.
-    public init(_ die: Die, times: Int = 1) {
-        self.die = die
+    public init(sides: Int, times: Int = 1) {
+        self.sides = sides
         self.times = times
     }
 
     /// Rolls the specified number of times, returning the array of rolls.
     internal func rollAll() -> [Int] {
-        return die.roll(times)
+        return (0..<times).map { _ in Int.random(in: 1...sides) }
     }
 
     /// Rolls the specified number of times, returning the sum of the rolls and a description.
     public func roll() -> DiceRoll {
         let lastRoll = rollAll()
         let result = lastRoll.reduce(0, +)
-        let description = rollDescription(lastRoll)
-        return DiceRoll(result, description)
+        return DiceRoll(result, rollDescription(lastRoll))
     }
 
-    /// Returns the number of dice sides.
-    public var sides: Int { die.rawValue }
-
     /// Returns a description, "[<times>]d<sides>"; times is left out if it is 1.
+    /// d100 is rendered as "d%".
     public var description: String {
         let timesString = times == 1 ? "" : "\(times)"
-        return "\(timesString)\(die)"
+        let sidesString = sides == 100 ? "%" : "\(sides)"
+        return "\(timesString)d\(sidesString)"
     }
 
     /// Returns the last roll as a sequence of added numbers in parenthesis.
     internal func rollDescription(_ lastRoll: [Int]) -> String {
         guard !lastRoll.isEmpty else { return "0" }
 
-        // Single roll doesn't need parentheses
         guard lastRoll.count > 1 else {
             return "\(lastRoll[0])"
         }
 
-        // Multiple rolls: format as (roll1 + roll2 + ... + rollN)
         let rollsString = lastRoll.map(String.init).joined(separator: " + ")
         return "(\(rollsString))"
     }
 }
 
-// MARK: - Arithmetic Operators
+// MARK: - Multiplication Operator
 
 /// Returns a `Dice` rolled the specified number of times.
 public func *(lhs: Int, rhs: Dice) -> Dice {
-    Dice(rhs.die, times: lhs)
+    Dice(sides: rhs.sides, times: lhs)
 }
 
-// These extensions are intended to be used with the `*` operator, above,
-// since that replaces the need to specify the `times` parameter.
+// Named shorthands for the standard polyhedral set. Use these with the `*`
+// operator above instead of specifying `times` explicitly.
+//
+// For dice outside this set, construct directly or add your own shorthands:
+//
+//     extension Dice {
+//         static let d3  = Dice(sides: 3)
+//         static let d30 = Dice(sides: 30)
+//     }
 extension Dice {
-    public static let d4   = Dice(.d4)
-    public static let d6   = Dice(.d6)
-    public static let d8   = Dice(.d8)
-    public static let d10  = Dice(.d10)
-    public static let d12  = Dice(.d12)
-    public static let d20  = Dice(.d20)
-    public static let d100 = Dice(.d100)
+    public static let d4   = Dice(sides: 4)
+    public static let d6   = Dice(sides: 6)
+    public static let d8   = Dice(sides: 8)
+    public static let d10  = Dice(sides: 10)
+    public static let d12  = Dice(sides: 12)
+    public static let d20  = Dice(sides: 20)
+    public static let d100 = Dice(sides: 100)
 }
