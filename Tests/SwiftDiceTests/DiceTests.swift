@@ -279,6 +279,30 @@ struct DiceTests {
         }
     }
 
+    @Test("Exploding dice description")
+    func explodingDiceDescription() {
+        #expect(Dice.d6.exploding.description == "d6!")
+        #expect((2 * Dice.d6).exploding.description == "2d6!")
+        #expect((2 * .d6.exploding).description == "2d6!")
+    }
+
+    @Test("Exploding dice rolls at least one")
+    func explodingDiceRolls() {
+        let dice = Dice.d6.exploding
+        for _ in 0..<sampleSize {
+            #expect(dice.roll().result >= 1)
+        }
+    }
+
+    @Test("Exploding dice with dropping")
+    func explodingDiceWithDropping() {
+        let dice = (2 * Dice.d6).exploding.dropping(.lowest)
+        #expect(dice.description == "2d6!-L")
+        for _ in 0..<sampleSize {
+            #expect(dice.roll().result >= 1)
+        }
+    }
+
     @Test("Compound dice with dice")
     func compoundDiceWithDice() {
         let compoundDice = 2 * Dice.d8 + Dice.d4

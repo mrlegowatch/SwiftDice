@@ -56,6 +56,7 @@ enum Token {
     case drop(String, Int)
     case keep(String, Int)
     case fudge
+    case exploding
 
     // MARK: Character Sets
 
@@ -66,6 +67,7 @@ enum Token {
     )
     private static let percentCharacters = CharacterSet(charactersIn: "%")
     private static let fudgeCharacters = CharacterSet(charactersIn: "fF")
+    private static let explodingCharacters = CharacterSet(charactersIn: "!")
 
     // MARK: Initialization
 
@@ -81,6 +83,8 @@ enum Token {
             self = .number(100)
         case _ where Self.fudgeCharacters.contains(scalar):
             self = .fudge
+        case _ where Self.explodingCharacters.contains(scalar):
+            self = .exploding
         default:
             return nil
         }
@@ -281,6 +285,16 @@ private struct DiceParserState {
         lastDice = SelectingDice(dice, selection: .init(kind: dropKind, count: dropCount), method: .keeping)
     }
 
+    /// Marks the current dice as exploding.
+    ///
+    /// - Throws: `DiceParseError.missingSimpleDice` if no basic dice expression precedes `!`
+    mutating func parseExploding() throws {
+        guard let dice = lastDice as? Dice else {
+            throw DiceParseError.missingSimpleDice
+        }
+        lastDice = dice.exploding
+    }
+
     /// Parses a math operator.
     ///
     /// - Throws: `DiceParseError.consecutiveMathOperators` if another operator is pending
@@ -364,6 +378,9 @@ func parse(_ tokens: [Token]) throws -> Rollable? {
         case .keep(let keep, let count):
             try state.parse(keep: keep, count: count)
 
+        case .exploding:
+            try state.parseExploding()
+
         case .mathOperator(let math):
             if !isNextTokenDropping(tokens, after: index) {
                 parsedDice = state.combine(parsedDice)
@@ -393,6 +410,7 @@ public extension String {
     /// - `"4d6-L2"` → Four 6-sided dice, drop two lowest
     /// - `"4d6kh3"` → Four 6-sided dice, keep three highest
     /// - `"2d20kl1"` → Two d20, keep one lowest (disadvantage)
+    /// - `"2d6!"` → Two exploding d6 (reroll and add on a 6)
     /// - `"1"` → Constant modifier of 1
     /// - `"2d4+3d12-4"` → Compound expression
     /// - `"4dF"` → Four Fudge dice

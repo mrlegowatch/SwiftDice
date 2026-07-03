@@ -11,17 +11,38 @@
 public struct Dice: Rollable {
     public let sides: Int
     public let times: Int
+    public let isExploding: Bool
 
-    /// Creates a Dice with the specified number of sides. Optionally specify times to roll.
-    /// Defaults to rolling one time.
-    public init(sides: Int, times: Int = 1) {
+    /// Maximum number of extra rolls allowed per die when exploding.
+    private static let maxExplosions = 100
+
+    /// Creates a Dice with the specified number of sides. Optionally specify times to roll
+    /// or whether the dice explode (reroll and add on a maximum result).
+    public init(sides: Int, times: Int = 1, exploding: Bool = false) {
         self.sides = sides
         self.times = times
+        self.isExploding = exploding
     }
 
-    /// Rolls the specified number of times, returning the array of rolls.
+    /// Returns a copy of this Dice with explosion enabled.
+    public var exploding: Dice {
+        Dice(sides: sides, times: times, exploding: true)
+    }
+
+    /// Rolls the specified number of times, returning the array of per-die results.
+    /// When exploding, each element is the chain sum for that die position.
     internal func rollAll() -> [Int] {
-        return (0..<times).map { _ in Int.random(in: 1...sides) }
+        (0..<times).map { _ in
+            var total = 0
+            var lastRoll = 0
+            var count = 0
+            repeat {
+                lastRoll = Int.random(in: 1...sides)
+                total += lastRoll
+                count += 1
+            } while isExploding && lastRoll == sides && count <= Self.maxExplosions
+            return total
+        }
     }
 
     /// Rolls the specified number of times, returning the sum of the rolls and a description.
@@ -31,12 +52,13 @@ public struct Dice: Rollable {
         return DiceRoll(result, rollDescription(lastRoll))
     }
 
-    /// Returns a description, "[<times>]d<sides>"; times is left out if it is 1.
+    /// Returns a description, "[<times>]d<sides>[!]"; times is left out if it is 1.
     /// d100 is rendered as "d%".
     public var description: String {
         let timesString = times == 1 ? "" : "\(times)"
         let sidesString = sides == 100 ? "%" : "\(sides)"
-        return "\(timesString)d\(sidesString)"
+        let explodingString = isExploding ? "!" : ""
+        return "\(timesString)d\(sidesString)\(explodingString)"
     }
 
     /// Returns the last roll as a sequence of added numbers in parenthesis.
@@ -54,9 +76,9 @@ public struct Dice: Rollable {
 
 // MARK: - Multiplication Operator
 
-/// Returns a `Dice` rolled the specified number of times.
+/// Returns a `Dice` rolled the specified number of times, preserving the exploding flag.
 public func *(lhs: Int, rhs: Dice) -> Dice {
-    Dice(sides: rhs.sides, times: lhs)
+    Dice(sides: rhs.sides, times: lhs, exploding: rhs.isExploding)
 }
 
 // Named shorthands for the standard polyhedral set. Use these with the `*`

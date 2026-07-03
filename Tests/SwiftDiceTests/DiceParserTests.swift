@@ -387,6 +387,42 @@ struct DiceParserTests {
         }
     }
 
+    @Test("Exploding dice string")
+    func explodingDiceString() {
+        let dice = "d6!".parseDice
+        #expect(dice != nil, "d6! should parse")
+        #expect(dice?.description == "d6!")
+        if let dice = dice {
+            for _ in 0..<sampleSize {
+                #expect(dice.roll().result >= 1)
+            }
+        }
+    }
+
+    @Test("Exploding dice times string")
+    func explodingDiceTimesString() {
+        let dice = "2d6!".parseDice
+        #expect(dice != nil, "2d6! should parse")
+        #expect(dice?.description == "2d6!")
+        if let dice = dice {
+            for _ in 0..<sampleSize {
+                #expect(dice.roll().result >= 2)
+            }
+        }
+    }
+
+    @Test("Exploding dice with dropping")
+    func explodingDiceWithDropping() {
+        let dice = "4d6!-L".parseDice
+        #expect(dice != nil, "4d6!-L should parse")
+        #expect(dice?.description == "4d6!-L")
+        if let dice = dice {
+            for _ in 0..<sampleSize {
+                #expect(dice.roll().result >= 3)
+            }
+        }
+    }
+
     @Test("Keep highest notation")
     func keepHighestString() {
         let dice = "4d6kh3".parseDice
@@ -430,7 +466,8 @@ struct DiceParserTests {
         ("3++4", "consecutive math operators"),
         ("d4d4", "consecutive dice expressions"),
         ("dd4", "consecutive dice 'd' characters"),
-        ("2d4k", "keep missing method character")
+        ("2d4k", "keep missing method character"),
+        ("!", "bare exploding without dice")
     ])
     func invalidDiceFormatStrings(badFormatString: String, reason: String) {
         let roll = badFormatString.parseDice
