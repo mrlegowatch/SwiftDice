@@ -37,6 +37,7 @@ Dice.d20                              // d20
 (4 * .d6).keeping(3, .highest)        // 4d6kh3 (keep 3 highest of 4d6)
 (2 * .d20).keeping(.highest)          // 2d20kh1 (advantage)
 (2 * .d6).exploding                   // 2d6! (reroll and add on max)
+(4 * .d6).rerolling(below: 1)         // 4d6r1 (reroll 1s once, keep new result)
 5 * .d4 * 10                          // 5d4x10
 Dice.d100 / 10                        // d100/10
 ```
@@ -89,6 +90,8 @@ Supported drop modifiers: `-L` (drop one lowest), `-L2` (drop two lowest), `-H` 
 Supported keep modifiers: `kh<n>` (keep n highest), `kl<n>` (keep n lowest)
 
 Supported explosion modifier: `!` after the die size (e.g. `2d6!`) — reroll and add on a maximum result, up to 100 extra rolls per die
+
+Supported reroll modifier: `r<n>` after the die size (e.g. `2d6r1`) — reroll once if the initial result is at or below `n`, keeping the new result
 
 Compound expressions are supported: `"2d4+3d12-4"` parses as `((2d4) + (3d12)) - 4`.
 

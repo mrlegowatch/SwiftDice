@@ -303,6 +303,40 @@ struct DiceTests {
         }
     }
 
+    @Test("Rerolling dice description")
+    func rerollingDiceDescription() {
+        #expect(Dice.d6.rerolling(below: 1).description == "d6r1")
+        #expect((4 * Dice.d6).rerolling(below: 2).description == "4d6r2")
+        #expect((2 * .d6.rerolling(below: 1)).description == "2d6r1")
+    }
+
+    @Test("Rerolling dice rolls at least one")
+    func rerollingDiceRolls() {
+        let dice = Dice.d6.rerolling(below: 1)
+        for _ in 0..<sampleSize {
+            #expect((1...6).contains(dice.roll().result))
+        }
+    }
+
+    @Test("Rerolling dice with dropping")
+    func rerollingDiceWithDropping() {
+        // 4d6 reroll 1s, drop lowest — classic D&D ability score roll variant
+        let dice = (4 * Dice.d6).rerolling(below: 1).dropping(.lowest)
+        #expect(dice.description == "4d6r1-L")
+        for _ in 0..<sampleSize {
+            #expect((3...18).contains(dice.roll().result))
+        }
+    }
+
+    @Test("Rerolling and exploding dice")
+    func rerollingAndExplodingDice() {
+        let dice = Dice.d6.rerolling(below: 1).exploding
+        #expect(dice.description == "d6!r1")
+        for _ in 0..<sampleSize {
+            #expect(dice.roll().result >= 1)
+        }
+    }
+
     @Test("Compound dice with dice")
     func compoundDiceWithDice() {
         let compoundDice = 2 * Dice.d8 + Dice.d4

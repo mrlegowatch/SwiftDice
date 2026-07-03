@@ -12,25 +12,35 @@ public struct Dice: Rollable {
     public let sides: Int
     public let times: Int
     public let isExploding: Bool
+    /// When set, any initial die result at or below this value is rerolled once.
+    public let rerollThreshold: Int?
 
     /// Maximum number of extra rolls allowed per die when exploding.
     private static let maxExplosions = 100
 
-    /// Creates a Dice with the specified number of sides. Optionally specify times to roll
-    /// or whether the dice explode (reroll and add on a maximum result).
-    public init(sides: Int, times: Int = 1, exploding: Bool = false) {
+    /// Creates a Dice with the specified number of sides. Optionally specify times to roll,
+    /// whether dice explode (reroll and add on a maximum result), and a reroll threshold
+    /// (reroll once if the initial result is at or below this value).
+    public init(sides: Int, times: Int = 1, exploding: Bool = false, rerollThreshold: Int? = nil) {
         self.sides = sides
         self.times = times
         self.isExploding = exploding
+        self.rerollThreshold = rerollThreshold
     }
 
-    /// Returns a copy of this Dice with explosion enabled.
+    /// Returns a copy of this Dice with explosion enabled, preserving all other options.
     public var exploding: Dice {
-        Dice(sides: sides, times: times, exploding: true)
+        Dice(sides: sides, times: times, exploding: true, rerollThreshold: rerollThreshold)
+    }
+
+    /// Returns a copy of this Dice that rerolls once any initial result at or below `threshold`,
+    /// preserving all other options.
+    public func rerolling(below threshold: Int) -> Dice {
+        Dice(sides: sides, times: times, exploding: isExploding, rerollThreshold: threshold)
     }
 
     /// Rolls the specified number of times, returning the array of per-die results.
-    /// When exploding, each element is the chain sum for that die position.
+    /// Reroll (if set) applies to the initial roll only; explosion chains follow.
     internal func rollAll() -> [Int] {
         (0..<times).map { _ in
             var total = 0
@@ -38,6 +48,9 @@ public struct Dice: Rollable {
             var count = 0
             repeat {
                 lastRoll = Int.random(in: 1...sides)
+                if count == 0, let threshold = rerollThreshold, lastRoll <= threshold {
+                    lastRoll = Int.random(in: 1...sides)
+                }
                 total += lastRoll
                 count += 1
             } while isExploding && lastRoll == sides && count <= Self.maxExplosions
@@ -52,13 +65,14 @@ public struct Dice: Rollable {
         return DiceRoll(result, rollDescription(lastRoll))
     }
 
-    /// Returns a description, "[<times>]d<sides>[!]"; times is left out if it is 1.
+    /// Returns a description, "[<times>]d<sides>[!][r<threshold>]"; times is left out if 1.
     /// d100 is rendered as "d%".
     public var description: String {
         let timesString = times == 1 ? "" : "\(times)"
         let sidesString = sides == 100 ? "%" : "\(sides)"
         let explodingString = isExploding ? "!" : ""
-        return "\(timesString)d\(sidesString)\(explodingString)"
+        let rerollString = rerollThreshold.map { "r\($0)" } ?? ""
+        return "\(timesString)d\(sidesString)\(explodingString)\(rerollString)"
     }
 
     /// Returns the last roll as a sequence of added numbers in parenthesis.
@@ -76,9 +90,9 @@ public struct Dice: Rollable {
 
 // MARK: - Multiplication Operator
 
-/// Returns a `Dice` rolled the specified number of times, preserving the exploding flag.
+/// Returns a `Dice` rolled the specified number of times, preserving all roll options.
 public func *(lhs: Int, rhs: Dice) -> Dice {
-    Dice(sides: rhs.sides, times: lhs, exploding: rhs.isExploding)
+    Dice(sides: rhs.sides, times: lhs, exploding: rhs.isExploding, rerollThreshold: rhs.rerollThreshold)
 }
 
 // Named shorthands for the standard polyhedral set. Use these with the `*`

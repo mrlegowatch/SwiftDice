@@ -387,6 +387,37 @@ struct DiceParserTests {
         }
     }
 
+    @Test("Rerolling dice string")
+    func rerollingDiceString() {
+        let dice = "2d6r1".parseDice
+        #expect(dice != nil, "2d6r1 should parse")
+        #expect(dice?.description == "2d6r1")
+        if let dice = dice {
+            for _ in 0..<sampleSize {
+                #expect((2...12).contains(dice.roll().result))
+            }
+        }
+    }
+
+    @Test("Rerolling dice with dropping")
+    func rerollingDiceWithDropping() {
+        let dice = "4d6r1-L".parseDice
+        #expect(dice != nil, "4d6r1-L should parse")
+        #expect(dice?.description == "4d6r1-L")
+        if let dice = dice {
+            for _ in 0..<sampleSize {
+                #expect((3...18).contains(dice.roll().result))
+            }
+        }
+    }
+
+    @Test("Rerolling and exploding dice string")
+    func rerollingAndExplodingDiceString() {
+        let dice = "2d6!r1".parseDice
+        #expect(dice != nil, "2d6!r1 should parse")
+        #expect(dice?.description == "2d6!r1")
+    }
+
     @Test("Exploding dice string")
     func explodingDiceString() {
         let dice = "d6!".parseDice
@@ -467,7 +498,9 @@ struct DiceParserTests {
         ("d4d4", "consecutive dice expressions"),
         ("dd4", "consecutive dice 'd' characters"),
         ("2d4k", "keep missing method character"),
-        ("!", "bare exploding without dice")
+        ("!", "bare exploding without dice"),
+        ("2d6r", "reroll without threshold")
+
     ])
     func invalidDiceFormatStrings(badFormatString: String, reason: String) {
         let roll = badFormatString.parseDice

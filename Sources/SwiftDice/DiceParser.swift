@@ -57,6 +57,7 @@ enum Token {
     case keep(String, Int)
     case fudge
     case exploding
+    case reroll(Int)
 
     // MARK: Character Sets
 
@@ -131,6 +132,7 @@ private struct NumberBuffer {
 /// - Throws: `DiceParseError.invalidCharacter` if an unknown character is encountered
 func tokenize(_ string: String) throws -> [Token] {
     let keepCharacters = CharacterSet(charactersIn: "kK")
+    let rerollCharacters = CharacterSet(charactersIn: "rR")
     var tokens: [Token] = []
     var numberBuffer = NumberBuffer()
     let scalars = string.unicodeScalars
@@ -153,6 +155,19 @@ func tokenize(_ string: String) throws -> [Token] {
                 }
                 tokens.append(.keep(kind.rawValue, 1))
                 index = scalars.index(after: index)
+                continue
+            }
+
+            if rerollCharacters.contains(scalar) {
+                var thresholdStr = ""
+                while index < scalars.endIndex && CharacterSet.decimalDigits.contains(scalars[index]) {
+                    thresholdStr.append(String(scalars[index]))
+                    index = scalars.index(after: index)
+                }
+                guard !thresholdStr.isEmpty, let threshold = Int(thresholdStr) else {
+                    throw DiceParseError.invalidCharacter(String(scalar))
+                }
+                tokens.append(.reroll(threshold))
                 continue
             }
 
@@ -295,6 +310,16 @@ private struct DiceParserState {
         lastDice = dice.exploding
     }
 
+    /// Sets the reroll threshold on the current dice.
+    ///
+    /// - Throws: `DiceParseError.missingSimpleDice` if no basic dice expression precedes `r<n>`
+    mutating func parseReroll(threshold: Int) throws {
+        guard let dice = lastDice as? Dice else {
+            throw DiceParseError.missingSimpleDice
+        }
+        lastDice = dice.rerolling(below: threshold)
+    }
+
     /// Parses a math operator.
     ///
     /// - Throws: `DiceParseError.consecutiveMathOperators` if another operator is pending
@@ -381,6 +406,9 @@ func parse(_ tokens: [Token]) throws -> Rollable? {
         case .exploding:
             try state.parseExploding()
 
+        case .reroll(let threshold):
+            try state.parseReroll(threshold: threshold)
+
         case .mathOperator(let math):
             if !isNextTokenDropping(tokens, after: index) {
                 parsedDice = state.combine(parsedDice)
@@ -411,6 +439,7 @@ public extension String {
     /// - `"4d6kh3"` → Four 6-sided dice, keep three highest
     /// - `"2d20kl1"` → Two d20, keep one lowest (disadvantage)
     /// - `"2d6!"` → Two exploding d6 (reroll and add on a 6)
+    /// - `"2d6r1"` → Two d6, reroll initial 1s once (take new result)
     /// - `"1"` → Constant modifier of 1
     /// - `"2d4+3d12-4"` → Compound expression
     /// - `"4dF"` → Four Fudge dice
