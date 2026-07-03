@@ -41,7 +41,8 @@ public struct Dice: Rollable {
 
     /// Rolls the specified number of times, returning the array of per-die results.
     /// Reroll (if set) applies to the initial roll only; explosion chains follow.
-    internal func rollAll() -> [Int] {
+    /// When exploding, each element is the chain sum for that die position, not individual rolls.
+    public func rollAll() -> [Int] {
         (0..<times).map { _ in
             var total = 0
             var lastRoll = 0

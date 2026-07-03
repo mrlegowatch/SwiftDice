@@ -359,6 +359,23 @@ struct DiceTests {
         #expect("\(compoundDice.description)" == "2d8+d4", "description")
     }
 
+    // Client-side success pool built on rollAll() — demonstrates the extension point
+    // for pool mechanics without requiring library support for a specific system's rules.
+    private struct SuccessPool {
+        let dice: Dice
+        let threshold: Int
+        func roll() -> Int { dice.rollAll().filter { $0 >= threshold }.count }
+    }
+
+    @Test("Success pool via rollAll (client-side example)")
+    func successPool() {
+        // 5d10, count hits >= 6 (Shadowrun-style)
+        let pool = SuccessPool(dice: 5 * .d10, threshold: 6)
+        for _ in 0..<sampleSize {
+            #expect((0...5).contains(pool.roll()))
+        }
+    }
+
     @Test("FudgeDice single")
     func fudgeDiceSingle() {
         let dice = FudgeDice.dF
