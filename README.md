@@ -17,6 +17,7 @@ All types conform to `Rollable`, which requires a `roll() -> DiceRoll` method an
 | Type | Description | Example |
 |---|---|---|
 | `Dice` | One or more of the same die | `Dice.d8`, `2 * .d8` |
+| `FudgeDice` | A Fudge/FATE die with outcomes of -1, 0, or +1 per die rolled | `FudgeDice.dF`, `4 * .dF` |
 | `SelectingDice` | Rolls multiple dice, dropping or keeping the highest or lowest | `(4 * .d6).dropping(.lowest)`, `(4 * .d6).keeping(3, .highest)` |
 | `CompoundDice` | Combines two `Rollable` values with a math operator | `2 * .d8 + 4`, `2 * .d8 + .d4` |
 | `DiceModifier` | A constant value used as a `Rollable` | `DiceModifier(3)` → `"3"` |
