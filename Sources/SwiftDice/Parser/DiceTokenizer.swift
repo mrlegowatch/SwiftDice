@@ -61,35 +61,30 @@ enum Token {
 
     // MARK: Single-character recognition
 
-    private static let mathOperatorCharacters = CharacterSet(charactersIn: "+-x*/")
-    private static let dieCharacters = CharacterSet(charactersIn: "dD")
-    private static let dropCharacters = CharacterSet(
-        charactersIn: SelectingDice.Selection.Kind.allCases.map(\.rawValue).joined()
-    )
-    private static let percentCharacters = CharacterSet(charactersIn: "%")
-    private static let fudgeCharacters = CharacterSet(charactersIn: "fF")
-    private static let explodingCharacters = CharacterSet(charactersIn: "!")
+    /// Each entry pairs a character set with a factory producing the corresponding token.
+    /// Add a new entry here to support an additional single-character token.
+    private static let recognizers: [(CharacterSet, @Sendable (UnicodeScalar) -> Token?)] = [
+        (CharacterSet(charactersIn: "+-x*/"), { .mathOperator(String($0)) }),
+        (CharacterSet(charactersIn: "dD"),    { _ in .die }),
+        (CharacterSet(charactersIn: "LH"),    { .drop(String($0), 1) }),
+        (CharacterSet(charactersIn: "%"),     { _ in .number(100) }),
+        (CharacterSet(charactersIn: "fF"),    { _ in .fudge }),
+        (CharacterSet(charactersIn: "!"),     { _ in .exploding }),
+    ]
+    static let keepCharacters = CharacterSet(charactersIn: "kK")
+    static let rerollCharacters = CharacterSet(charactersIn: "rR")
 
     /// Initializes a token from a single Unicode scalar. Returns `nil` for characters
     /// that require multi-character lookahead (`k`/`K` for keep, `r`/`R` for reroll),
     /// which are handled inline in `tokenize(_:)`.
     init?(from scalar: UnicodeScalar) {
-        switch scalar {
-        case _ where Self.mathOperatorCharacters.contains(scalar):
-            self = .mathOperator(String(scalar))
-        case _ where Self.dieCharacters.contains(scalar):
-            self = .die
-        case _ where Self.dropCharacters.contains(scalar):
-            self = .drop(String(scalar), 1)
-        case _ where Self.percentCharacters.contains(scalar):
-            self = .number(100)
-        case _ where Self.fudgeCharacters.contains(scalar):
-            self = .fudge
-        case _ where Self.explodingCharacters.contains(scalar):
-            self = .exploding
-        default:
-            return nil
+        for (characterSet, factory) in Self.recognizers where characterSet.contains(scalar) {
+            if let token = factory(scalar) {
+                self = token
+                return
+            }
         }
+        return nil
     }
 
     // MARK: Properties
@@ -126,8 +121,6 @@ private struct NumberBuffer {
 /// - Returns: An array of tokens representing the parsed string
 /// - Throws: `DiceParseError.invalidCharacter` if an unknown character is encountered
 func tokenize(_ string: String) throws -> [Token] {
-    let keepCharacters = CharacterSet(charactersIn: "kK")
-    let rerollCharacters = CharacterSet(charactersIn: "rR")
     var tokens: [Token] = []
     var numberBuffer = NumberBuffer()
     let scalars = string.unicodeScalars
@@ -143,7 +136,7 @@ func tokenize(_ string: String) throws -> [Token] {
             if let value = numberBuffer.flush() { tokens.append(.number(value)) }
             guard !CharacterSet.whitespacesAndNewlines.contains(scalar) else { continue }
 
-            if keepCharacters.contains(scalar) {
+            if Token.keepCharacters.contains(scalar) {
                 guard index < scalars.endIndex,
                       let kind = SelectingDice.Selection.Kind(rawValue: String(scalars[index]).uppercased()) else {
                     throw DiceParseError.invalidCharacter(String(scalar))
@@ -153,7 +146,7 @@ func tokenize(_ string: String) throws -> [Token] {
                 continue
             }
 
-            if rerollCharacters.contains(scalar) {
+            if Token.rerollCharacters.contains(scalar) {
                 var thresholdStr = ""
                 while index < scalars.endIndex && CharacterSet.decimalDigits.contains(scalars[index]) {
                     thresholdStr.append(String(scalars[index]))

@@ -12,7 +12,7 @@
 public struct DiceModifier: Rollable {
     public let modifier: Int
 
-    init(_ modifier: Int) {
+    public init(_ modifier: Int) {
         self.modifier = modifier
     }
 

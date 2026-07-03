@@ -85,15 +85,8 @@ public func *(lhs: Int, rhs: Dice) -> Dice {
     Dice(sides: rhs.sides, times: lhs, exploding: rhs.isExploding, rerollThreshold: rhs.rerollThreshold)
 }
 
-// Named shorthands for the standard polyhedral set. Use these with the `*`
-// operator above instead of specifying `times` explicitly.
-//
-// For dice outside this set, construct directly or add your own shorthands:
-//
-//     extension Dice {
-//         static let d3  = Dice(sides: 3)
-//         static let d30 = Dice(sides: 30)
-//     }
+// Named shorthands for the standard polyhedral set. See README for the extension pattern
+// to add shorthands for non-standard die sizes (d3, d30, etc.).
 extension Dice {
     public static let d4   = Dice(sides: 4)
     public static let d6   = Dice(sides: 6)

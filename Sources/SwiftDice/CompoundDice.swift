@@ -54,7 +54,7 @@ public struct CompoundDice: Rollable {
     public var description: String { "\(lhs)\(mathOperator.rawValue)\(rhs)" }
 }
 
-// MARK: - Arithmetic Operators
+// MARK: - Addition and Subtraction
 
 public func +(lhs: some Rollable, rhs: some Rollable) -> CompoundDice {
     CompoundDice(lhs: lhs, rhs: rhs, mathOperator: .add)
@@ -91,9 +91,11 @@ public func -(lhs: some Rollable, rhs: Int) -> CompoundDice {
     CompoundDice(lhs: lhs, rhs: DiceModifier(rhs), mathOperator: .subtract)
 }
 
-// Multiply and divide operators. Note: `Int * Dice` (the "times" operator) and
-// `Rollable * Int` have opposite parameter order and do not conflict, so
-// `5 * .d4 * 10` evaluates as `(5 * .d4) * 10` → CompoundDice with .multiply.
+// MARK: - Multiplication and Division
+
+// Note: `Int * Dice` (the "times" operator) and `Rollable * Int` have opposite
+// parameter order and do not conflict, so `5 * .d4 * 10` evaluates as
+// `(5 * .d4) * 10` → CompoundDice with .multiply.
 
 public func *(lhs: some Rollable, rhs: some Rollable) -> CompoundDice {
     CompoundDice(lhs: lhs, rhs: rhs, mathOperator: .multiply)
