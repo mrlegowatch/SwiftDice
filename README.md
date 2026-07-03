@@ -1,4 +1,4 @@
-# SwiftDice  [![Swift](https://github.com/mrlegowatch/SwiftDice/actions/workflows/swift.yml/badge.svg)](https://github.com/mrlegowatch/SwiftDice/actions/workflows/swift.yml)
+# SwiftDice  [![Swift](https://github.com/mrlegowatch/SwiftDice/actions/workflows/Swift/badge.svg)](https://github.com/mrlegowatch/SwiftDice/actions/workflows/swift.yml)
 ![Code Coverage](https://codecov.io/gh/mrlegowatch/SwiftDice/branch/development/graph/badge.svg)
 ![Swift Version](https://img.shields.io/badge/Swift-6.0-orange.svg)
 ![Platform](https://img.shields.io/badge/platform-iOS%20%7C%20macOS%20%7C%20Linux-lightgrey.svg)
