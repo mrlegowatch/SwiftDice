@@ -1,4 +1,4 @@
-# SwiftDice  [![Swift](https://github.com/mrlegowatch/RolePlayingCore/actions/workflows/swift.yml/badge.svg)](https://github.com/mrlegowatch/RolePlayingCore/actions/workflows/swift.yml)
+# SwiftDice  [![Swift](https://github.com/mrlegowatch/SwiftDice/actions/workflows/swift.yml/badge.svg)](https://github.com/mrlegowatch/SwiftDice/actions/workflows/swift.yml)
 ![Code Coverage](https://codecov.io/gh/mrlegowatch/SwiftDice/branch/development/graph/badge.svg)
 ![Swift Version](https://img.shields.io/badge/Swift-6.0-orange.svg)
 ![Platform](https://img.shields.io/badge/platform-iOS%20%7C%20macOS%20%7C%20Linux-lightgrey.svg)
@@ -97,6 +97,18 @@ Supported explosion modifier: `!` after the die size (e.g. `2d6!`) — reroll an
 Supported reroll modifier: `r<n>` after the die size (e.g. `2d6r1`) — reroll once if the initial result is at or below `n`, keeping the new result
 
 Compound expressions are supported: `"2d4+3d12-4"` parses as `((2d4) + (3d12)) - 4`.
+
+## JSON Encoding
+
+`KeyedEncodingContainer` extensions support encoding any `Rollable` as its dice notation string:
+
+```swift
+// In your Encodable encode(to:):
+try container.encode(hitDice, forKey: .hitDice)          // writes e.g. "2d6+2"
+try container.encodeIfPresent(bonusDice, forKey: .bonus)  // omits key if nil
+```
+
+The encoded value is the `description` of the `Rollable` — the same notation string that `DiceParser` can round-trip back to an equivalent instance.
 
 ## JSON Decoding
 
