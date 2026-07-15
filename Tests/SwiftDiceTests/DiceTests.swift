@@ -3,7 +3,7 @@
 //  SwiftDice
 //
 //  Created by Brian Arnold on 11/12/16.
-//  Copyright © 2016-2017 Brian Arnold. All rights reserved.
+//  Copyright © 2016 Brian Arnold. All rights reserved.
 //
 
 import Testing
