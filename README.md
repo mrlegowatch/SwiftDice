@@ -22,7 +22,7 @@ Add the package to your `Package.swift`:
 
 ```swift
 dependencies: [
-    .package(url: "https://github.com/mrlegowatch/SwiftDice", branch: "development"),
+    .package(url: "https://github.com/mrlegowatch/SwiftDice", branch: "main"),
 ],
 targets: [
     .target(name: "YourTarget", dependencies: ["SwiftDice"]),
