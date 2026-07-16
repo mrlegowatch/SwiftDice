@@ -1,9 +1,5 @@
 # ``FudgeDice``
 
-@Metadata {
-    @DocumentationExtension(mergeBehavior: append)
-}
-
 ## Topics
 
 ### Creating Fudge Dice
@@ -19,7 +15,3 @@
 ### Rolling
 
 - ``roll()``
-
-### Operators
-
-- ``*(lhs:rhs:)``

@@ -1,9 +1,5 @@
 # ``CompoundDice``
 
-@Metadata {
-    @DocumentationExtension(mergeBehavior: append)
-}
-
 ## Topics
 
 ### Creating Compound Expressions
@@ -21,10 +17,3 @@
 ### Rolling
 
 - ``roll()``
-
-### Arithmetic Operators
-
-- ``+(lhs:rhs:)``
-- ``-(lhs:rhs:)``
-- ``*(lhs:rhs:)``
-- ``/(lhs:rhs:)``

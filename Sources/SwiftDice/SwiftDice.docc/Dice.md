@@ -1,9 +1,5 @@
 # ``Dice``
 
-@Metadata {
-    @DocumentationExtension(mergeBehavior: append)
-}
-
 ## Topics
 
 ### Standard Dice
@@ -44,7 +40,3 @@
 - ``dropping(_:_:)``
 - ``keeping(_:)``
 - ``keeping(_:_:)``
-
-### Operators
-
-- ``*(lhs:rhs:)``
