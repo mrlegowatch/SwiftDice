@@ -10,7 +10,11 @@ import Foundation
 
 // MARK: Parse Errors
 
-/// Types of errors handled by this parser.
+/// The specific kind of error that caused a dice notation string to fail parsing.
+///
+/// Returned as `DiceParseFailure.error` after catching a parse failure from `DiceParser.parse(_:)`.
+/// Use the cases to branch on the failure kind programmatically; use `errorDescription` for a
+/// human-readable message suitable for display.
 public enum DiceParseError: Error, LocalizedError, Equatable, Sendable {
     case invalidCharacter(String)
     case invalidDieSides(Int)
@@ -26,19 +30,19 @@ public enum DiceParseError: Error, LocalizedError, Equatable, Sendable {
         case .invalidCharacter(let char):
             return "Invalid character '\(char)' in dice expression"
         case .invalidDieSides(let sides):
-            return "Invalid die with \(sides) sides"
+            return "Die sides must be a positive integer (got \(sides)); try 'd6', 'd20', or any positive number"
         case .missingMinus:
-            return "Drop modifier requires '-' operator"
+            return "Drop notation requires a preceding '-' (e.g. \"4d6-L\", not \"4d6L\")"
         case .missingSimpleDice:
-            return "Drop modifier can only be applied to a basic dice expression"
+            return "This modifier requires a preceding basic dice expression (e.g. '2d6'); Fudge dice and bare operators are not supported here"
         case .missingDieSides:
-            return "Die specification missing number of sides"
+            return "Expected a number, 'F', or '%' after 'd' (e.g. 'd6', 'd20', 'd%', 'dF')"
         case .missingExpression:
-            return "Math operator missing right-hand expression"
+            return "Expected a dice expression (e.g. 'd6', '2d8+4'); the input is empty or ends with an incomplete operator"
         case .consecutiveDiceExpressions:
-            return "Cannot have consecutive dice expressions without an operator"
+            return "Unexpected token after a complete expression; did you forget an operator? (e.g. 'd4+d4', '2+3')"
         case .missingClosingParen:
-            return "Missing closing parenthesis in dice expression"
+            return "Unmatched '(' — add a closing ')' to complete the group"
         }
     }
 }
