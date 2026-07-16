@@ -6,6 +6,16 @@
 
 A Swift package for representing and rolling dice using standard tabletop RPG notation.
 
+SwiftDice is built for developers implementing tabletop RPG mechanics who need more than a random number generator. Dice expressions are first-class Swift values that are composable with operators, parseable from notation strings, and serializable to JSON, so your game data layer and your dice logic speak the same language.
+
+- **Operator-based expression building** — write `4 * .d6`, `2 * .d8 + 4`, or `(4 * .d6).dropping(.lowest)` directly in Swift without formatting strings
+- **Full notation parser** — round-trips between Swift values and standard dice notation; `DiceParser` accepts everything from `d6` to `4d6-L+d4`
+- **Drop and keep mechanics** — `dropping(.lowest)`, `keeping(3, .highest)`, `keeping(.highest)` for ability rolls, advantage, and disadvantage
+- **Exploding and reroll modifiers** — per-die explosion chains and one-time reroll thresholds, combinable on a single die
+- **Fudge/FATE dice** — built-in `dF` support with the same operator and parser integration as standard dice
+- **Pool mechanics** — `rollAll()` returns per-die results before summing, enabling success-counting and per-die threshold logic
+- **JSON round-trip** — encode any `Rollable` as its notation string and decode it back, with automatic integer coercion for raw constants
+
 ## Installation
 
 Add the package to your `Package.swift`:
