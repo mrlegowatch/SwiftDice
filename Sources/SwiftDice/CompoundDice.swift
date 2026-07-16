@@ -7,11 +7,18 @@
 //
 
 
-/// General-purpose composition of dice rolls.
+/// A dice expression that combines two `Rollable` operands with an arithmetic operator.
 ///
-/// The two primary use cases for this type are:
-/// - combining two rolls, e.g., "`2d4+d6`",
-/// - using a modifier, e.g., "`d12+2`".
+/// `CompoundDice` is produced by the arithmetic operators defined on `Rollable`:
+///
+/// ```swift
+/// 2 * .d8 + 4      // "2d8+4"  — two d8 plus a constant
+/// 2 * .d8 + .d4    // "2d8+d4" — two d8 plus one d4
+/// 5 * .d4 * 10     // "5d4x10" — five d4 multiplied by 10
+/// ```
+///
+/// Both operands are rolled independently on each `roll()` call, so every invocation produces
+/// a fresh result for both sides.
 public struct CompoundDice: Rollable, Equatable {
     public let lhs: Rollable
     public let rhs: Rollable
@@ -25,15 +32,19 @@ public struct CompoundDice: Rollable, Equatable {
         case divide   = "/"
     }
 
-    /// Creates a dice from two rollable instances with a math operator.
+    /// Creates a compound dice expression from two rollable operands.
+    /// - Parameters:
+    ///   - lhs: The left-hand operand.
+    ///   - rhs: The right-hand operand.
+    ///   - mathOperator: The arithmetic operation applied to the two rolled results.
     public init(lhs: Rollable, rhs: Rollable, mathOperator: MathOperator) {
         self.lhs = lhs
         self.rhs = rhs
         self.mathOperator = mathOperator
     }
 
-    /// Rolls the dice on both sides and combines them with the math operator,
-    /// returning the result.
+    /// Rolls both operands and combines their results with `mathOperator`.
+    /// - Returns: A `DiceRoll` whose `result` is the combined value and `description` shows both operands.
     public func roll() -> DiceRoll {
         let lhsRoll = lhs.roll()
         let rhsRoll = rhs.roll()

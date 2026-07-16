@@ -10,7 +10,11 @@ import Foundation
 
 // MARK: Parse Errors
 
-/// Types of errors handled by this parser.
+/// The specific kind of error that caused a dice notation string to fail parsing.
+///
+/// Returned as `DiceParseFailure.error` after catching a parse failure from `DiceParser.parse(_:)`.
+/// Use the cases to branch on the failure kind programmatically; use `errorDescription` for a
+/// human-readable message suitable for display.
 public enum DiceParseError: Error, LocalizedError, Equatable, Sendable {
     case invalidCharacter(String)
     case invalidDieSides(Int)

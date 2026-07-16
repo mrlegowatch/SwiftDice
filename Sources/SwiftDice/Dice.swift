@@ -7,10 +7,24 @@
 //
 
 
-/// A dice expression with a given number of sides, rolled one or more times.
+/// A standard polyhedral die, optionally rolled multiple times, with support for exploding and rerolling.
+///
+/// Use the static shorthands for the standard polyhedral set, then compose with arithmetic operators:
+///
+/// ```swift
+/// Dice.d6                          // one six-sided die
+/// 4 * .d6                          // four six-sided dice
+/// (4 * .d6).dropping(.lowest)      // four d6, drop the lowest
+/// Dice.d6.exploding                // d6 that explodes on a 6
+/// Dice.d6.rerolling(below: 1)      // d6 that rerolls initial 1s once
+/// ```
+///
+/// Use `rollAll()` to get the individual per-die values before they are summed — this enables
+/// client-side pool mechanics such as counting successes or applying per-die thresholds.
 public struct Dice: Rollable, Equatable {
     public let sides: Int
     public let times: Int
+    /// When `true`, a maximum roll triggers an additional roll whose value is added (chains up to 100 times per die).
     public let isExploding: Bool
     /// When set, any initial die result at or below this value is rerolled once.
     public let rerollThreshold: Int?
@@ -18,9 +32,12 @@ public struct Dice: Rollable, Equatable {
     /// Maximum number of extra rolls allowed per die when exploding.
     private static let maxExplosions = 100
 
-    /// Creates a Dice with the specified number of sides. Optionally specify times to roll,
-    /// whether dice explode (reroll and add on a maximum result), and a reroll threshold
-    /// (reroll once if the initial result is at or below this value).
+    /// Creates a `Dice` with the specified number of sides.
+    /// - Parameters:
+    ///   - sides: The number of sides on each die.
+    ///   - times: The number of dice to roll.
+    ///   - exploding: When `true`, a maximum result triggers an additional roll whose value is added.
+    ///   - rerollThreshold: When set, an initial result at or below this value is rerolled once.
     public init(sides: Int, times: Int = 1, exploding: Bool = false, rerollThreshold: Int? = nil) {
         self.sides = sides
         self.times = times
@@ -28,20 +45,23 @@ public struct Dice: Rollable, Equatable {
         self.rerollThreshold = rerollThreshold
     }
 
-    /// Returns a copy of this Dice with explosion enabled, preserving all other options.
+    /// A copy of this `Dice` with explosion enabled, preserving all other options.
     public var exploding: Dice {
         Dice(sides: sides, times: times, exploding: true, rerollThreshold: rerollThreshold)
     }
 
-    /// Returns a copy of this Dice that rerolls once any initial result at or below `threshold`,
-    /// preserving all other options.
+    /// Returns a copy of this `Dice` that rerolls once any initial result at or below `threshold`.
+    /// - Parameter threshold: Results at or below this value are rerolled once.
+    /// - Returns: A copy of this `Dice` with the reroll threshold set, preserving all other options.
     public func rerolling(below threshold: Int) -> Dice {
         Dice(sides: sides, times: times, exploding: isExploding, rerollThreshold: threshold)
     }
 
-    /// Rolls the specified number of times, returning the array of per-die results.
+    /// Rolls each die independently and returns the per-die results without summing.
+    ///
     /// Reroll (if set) applies to the initial roll only; explosion chains follow.
     /// When exploding, each element is the chain sum for that die position, not individual rolls.
+    /// - Returns: An array of per-die results; use `roll()` to get the aggregate sum.
     public func rollAll() -> [Int] {
         (0..<times).map { _ in
             var total = 0
@@ -59,7 +79,8 @@ public struct Dice: Rollable, Equatable {
         }
     }
 
-    /// Rolls the specified number of times, returning the sum of the rolls and a description.
+    /// Rolls all dice and returns the sum with a description of each value.
+    /// - Returns: A `DiceRoll` with `result` as the sum and `description` showing each die's value.
     public func roll() -> DiceRoll {
         let lastRoll = rollAll()
         let result = lastRoll.reduce(0, +)
@@ -80,7 +101,11 @@ public struct Dice: Rollable, Equatable {
 
 // MARK: - Multiplication Operator
 
-/// Returns a `Dice` rolled the specified number of times, preserving all roll options.
+/// Returns a `Dice` rolled `lhs` times, preserving all roll options on `rhs`.
+/// - Parameters:
+///   - lhs: The number of times to roll.
+///   - rhs: The die definition to replicate.
+/// - Returns: A `Dice` equivalent to rolling `rhs` `lhs` times.
 public func *(lhs: Int, rhs: Dice) -> Dice {
     Dice(sides: rhs.sides, times: lhs, exploding: rhs.isExploding, rerollThreshold: rhs.rerollThreshold)
 }

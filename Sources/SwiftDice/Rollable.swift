@@ -7,11 +7,19 @@
 //
 
 
-/// A representation of one or more dice of different sides and combinations.
-/// Implementations must conform to the CustomStringConvertible protocol.
+/// The common interface for all dice expressions.
+///
+/// All concrete dice types — `Dice`, `FudgeDice`, `SelectingDice`, `CompoundDice`, and
+/// `DiceModifier` — conform to `Rollable`. Accepting `any Rollable` (or `some Rollable`) lets
+/// you store and pass dice expressions without committing to a specific concrete type.
+///
+/// Conformers also implement `CustomStringConvertible`, returning the standard dice notation
+/// string (e.g. `"4d6-L"`, `"2d8+4"`), which `DiceParser` can round-trip back to an
+/// equivalent instance.
 public protocol Rollable: CustomStringConvertible, Sendable {
 
-    /// Rolls the dice, and returns the result in a DiceRoll.
+    /// Rolls the dice and returns the result.
+    /// - Returns: A `DiceRoll` containing the integer result and a description of intermediate values.
     func roll() -> DiceRoll
 }
 
