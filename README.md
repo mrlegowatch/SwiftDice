@@ -15,6 +15,13 @@ SwiftDice is built for developers implementing tabletop RPG mechanics who need m
 - **Fudge/FATE dice** — built-in `dF` support with the same operator and parser integration as standard dice
 - **Pool mechanics** — `rollAll()` returns per-die results before summing, enabling success-counting and per-die threshold logic
 - **JSON round-trip** — encode any `Rollable` as its notation string and decode it back
+- **`AnyRollable`** — a concrete, `Equatable`/`Hashable`/`Codable` value type wrapping any `Rollable`, so a struct gets dice-valued `Codable` for free:
+
+  ```swift
+  struct Treasure: Codable {
+      let goldPerGoblin: AnyRollable   // decodes from `8` or `"2d6"` alike
+  }
+  ```
 
 ## Installation
 

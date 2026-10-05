@@ -107,18 +107,23 @@ print("Successes: \(successes)")
 
 ## JSON Encoding and Decoding
 
-SwiftDice extends `KeyedEncodingContainer` and `KeyedDecodingContainer` to encode any
-``Rollable`` as its dice notation string and decode it back:
+A stored or coded dice value is an ``AnyRollable``, a type-erased box around any
+``Rollable`` that is itself `Equatable`, `Hashable`, and `Codable`:
 
 ```swift
-// Encoding — in your Encodable conformance:
-try container.encode(hitDice, forKey: .hitDice)           // writes e.g. "2d6+2"
-try container.encodeIfPresent(bonusDice, forKey: .bonus)  // omits key if nil
-
-// Decoding — in your Decodable conformance:
-let hitDice = try container.decode(Rollable.self, forKey: .hitDice)
-// accepts JSON values like "d10", "2d6+2", or the integer 5
+struct Monster: Codable {
+    let hitDice: AnyRollable    // decodes from "2d6+2", or the integer 5
+    let bonusDice: AnyRollable? // omits the key when nil while encoding
+}
 ```
 
-The encoded value is the `description` of the ``Rollable`` — the same notation string that
-``DiceParser`` can round-trip back to an equivalent instance.
+`AnyRollable` decodes from either a JSON integer (as a constant) or a dice notation string,
+and encodes a constant back as an integer and anything else as its notation string. Since it
+is a concrete `Codable` type, synthesized `Codable` conformances just work — no custom
+`init(from:)` or `encode(to:)` required:
+
+```swift
+let monster = Monster(hitDice: AnyRollable(2 * .d6 + 2), bonusDice: nil)
+let data = try JSONEncoder().encode(monster)  // {"hitDice":"2d6+2"}
+let decoded = try JSONDecoder().decode(Monster.self, from: data)
+```
