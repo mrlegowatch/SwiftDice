@@ -3,7 +3,7 @@
 //  SwiftDice
 //
 //  Created by Brian Arnold on 10/15/18.
-//  Copyright © 2018 Brian Arnold. All rights reserved.
+//  Copyright © 2018 Brian Arnold. Licensed under the MIT License.
 //
 
 /// The outcome of a single `roll()` call, pairing the numeric total with a breakdown of individual values.

@@ -37,6 +37,7 @@ print(damage.roll().result) // e.g. 13
 - ``SelectingDice``
 - ``DiceModifier``
 - ``FudgeDice``
+- ``AnyRollable``
 
 ### Parsing
 

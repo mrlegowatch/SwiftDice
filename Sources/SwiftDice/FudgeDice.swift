@@ -3,7 +3,7 @@
 //  SwiftDice
 //
 //  Created by Brian Arnold on 7/3/26.
-//  Copyright © 2026 Brian Arnold. All rights reserved.
+//  Copyright © 2026 Brian Arnold. Licensed under the MIT License.
 //
 
 /// A Fudge/FATE die expression that produces outcomes of −1, 0, or +1 per die.
