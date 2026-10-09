@@ -29,7 +29,7 @@ Add the package to your `Package.swift`:
 
 ```swift
 dependencies: [
-    .package(url: "https://github.com/mrlegowatch/SwiftDice", branch: "main"),
+    .package(url: "https://github.com/mrlegowatch/SwiftDice.git", from: "0.1.0"),
 ],
 targets: [
     .target(name: "YourTarget", dependencies: ["SwiftDice"]),
