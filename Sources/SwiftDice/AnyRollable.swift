@@ -3,7 +3,7 @@
 //  SwiftDice
 //
 //  Created by Brian Arnold on 10/5/26.
-//  Copyright © 2026 Brian Arnold. All rights reserved.
+//  Copyright © 2026 Brian Arnold. Licensed under the MIT License.
 //
 
 /// A type-erased `Rollable`, for storage, comparison and coding.
