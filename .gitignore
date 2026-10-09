@@ -1,5 +1,5 @@
 .DS_Store
-xcuserdata
+xcuserdata/
 DerivedData
 .swiftpm/xcode/package.xcworkspace/
 .swiftpm/xcode/xcuserdata/
