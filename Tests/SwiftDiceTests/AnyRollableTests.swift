@@ -51,6 +51,27 @@ struct AnyRollableTests {
         #expect(!expression.isConstant)
     }
 
+    // MARK: - Single die
+
+    @Test("Single plain die", arguments: [("d6", 6), ("1d20", 20), ("d%", 100)])
+    func singleDie(notation: String, sides: Int) throws {
+        let expression = try AnyRollable(parsing: notation)
+        let die = try #require(expression.singleDie)
+        #expect(die == Dice(sides: sides))
+    }
+
+    @Test("Not a single plain die", arguments: ["3", "2d6", "d6!", "d6r1", "d6+1", "4d6-L"])
+    func notSingleDie(notation: String) throws {
+        let expression = try AnyRollable(parsing: notation)
+        #expect(expression.singleDie == nil)
+    }
+
+    @Test("Single die from a Dice value")
+    func singleDieFromDice() {
+        #expect(AnyRollable(Dice.d10).singleDie?.sides == 10)
+        #expect(AnyRollable(2 * Dice.d10).singleDie == nil)
+    }
+
     // MARK: - Equality and hashing
 
     @Test("1d6 equals Dice.d6")

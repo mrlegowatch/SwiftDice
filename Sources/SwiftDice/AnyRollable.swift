@@ -74,6 +74,15 @@ public struct AnyRollable: Rollable, Hashable, Codable, ExpressibleByIntegerLite
         constant != nil
     }
 
+    /// The die when this expression is a single plain die (one `Dice`, rolled once, not
+    /// exploding, no reroll), such as `"d6"` or `"d%"`, otherwise `nil`. Each of its results,
+    /// 1 through `sides`, is equally likely.
+    public var singleDie: Dice? {
+        guard let dice = rollable as? Dice,
+              dice.times == 1, !dice.isExploding, dice.rerollThreshold == nil else { return nil }
+        return dice
+    }
+
     /// Rolls the wrapped expression.
     /// - Returns: The `DiceRoll` produced by the wrapped expression.
     public func roll() -> DiceRoll {
