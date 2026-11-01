@@ -29,7 +29,7 @@ Add the package to your `Package.swift`:
 
 ```swift
 dependencies: [
-    .package(url: "https://github.com/mrlegowatch/SwiftDice.git", from: "0.1.0"),
+    .package(url: "https://github.com/mrlegowatch/SwiftDice.git", from: "0.2.0"),
 ],
 targets: [
     .target(name: "YourTarget", dependencies: ["SwiftDice"]),
@@ -44,7 +44,7 @@ import SwiftDice
 // Roll ability scores: 4d6, keep 3 highest
 let abilityRoll = (4 * .d6).keeping(3, .highest)
 let result = abilityRoll.roll()
-print(result.result)       // e.g. 14
+print(result.result)       // e.g. 15
 print(result.description)  // e.g. "((3 + 6 + 4 + 5) - 3)"
 
 // Attack with advantage: 2d20, keep highest

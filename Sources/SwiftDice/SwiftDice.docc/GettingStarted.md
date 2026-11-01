@@ -89,7 +89,7 @@ Every `roll()` call returns a ``DiceRoll`` with two properties:
 
 ```swift
 let roll = (4 * .d6).dropping(.lowest).roll()
-print(roll.result)       // e.g. 14
+print(roll.result)       // e.g. 15
 print(roll.description)  // e.g. "((3 + 6 + 4 + 5) - 3)"
 ```
 
